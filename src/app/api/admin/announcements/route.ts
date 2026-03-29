@@ -22,7 +22,7 @@ async function checkAdmin() {
     return { authorized: false as const, error: "权限不足", status: 403 };
   }
 
-  return { authorized: true as const, supabase, userId: user.id };
+  return { authorized: true as const, supabase: supabase as any, userId: user.id };
 }
 
 export async function GET() {

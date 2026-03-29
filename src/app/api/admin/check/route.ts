@@ -19,12 +19,13 @@ export async function GET() {
       .eq("id", user.id)
       .single();
 
-    const isAdmin = profile?.role === "admin" || profile?.role === "moderator";
-    const isBanned = profile?.is_banned === true;
+    const role = (profile as { role: string; is_banned: boolean } | null)?.role || "user";
+    const isBanned = (profile as { role: string; is_banned: boolean } | null)?.is_banned === true;
+    const isAdmin = role === "admin" || role === "moderator";
 
     return NextResponse.json({ 
       isAdmin: isAdmin && !isBanned,
-      role: profile?.role || "user",
+      role,
       isBanned
     });
   } catch (error) {
