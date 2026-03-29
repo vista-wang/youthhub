@@ -64,6 +64,8 @@ export function AnnouncementsBanner({ announcements }: AnnouncementsBannerProps)
   if (announcements.length === 0 || isDismissed) return null;
 
   const current = announcements[currentIndex];
+  if (!current) return null;
+  
   const config = typeConfig[current.type];
   const Icon = config.icon;
 
