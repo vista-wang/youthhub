@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { transformPostsWithAuthor } from "@/lib/utils";
 
 type UserKeyword = { keyword: string; weight: number };
 type PostKeyword = { post_id: string; keyword: string; relevance: number };
@@ -15,6 +14,21 @@ type Post = {
   author_id: string;
   profiles?: { username: string; avatar_url: string | null } | null;
 };
+
+function transformPosts(posts: Post[]) {
+  return posts.map((post) => ({
+    id: post.id,
+    title: post.title,
+    content: post.content,
+    likes_count: post.likes_count,
+    comments_count: post.comments_count,
+    created_at: post.created_at,
+    updated_at: post.updated_at,
+    author_id: post.author_id,
+    author_name: post.profiles?.username || "匿名用户",
+    author_avatar: post.profiles?.avatar_url || null,
+  }));
+}
 
 export async function GET() {
   try {
@@ -99,12 +113,12 @@ export async function GET() {
 
     const typedPosts = (posts as Post[] | null) || [];
 
-    const sortedPosts = sortedPostIds
+    const sortedPosts: Post[] = sortedPostIds
       .map((id) => typedPosts.find((p) => p.id === id))
-      .filter(Boolean);
+      .filter((p): p is Post => p !== undefined);
 
     return NextResponse.json({ 
-      posts: transformPostsWithAuthor(sortedPosts),
+      posts: transformPosts(sortedPosts),
       keywords: keywords.slice(0, 5)
     });
   } catch (error) {
