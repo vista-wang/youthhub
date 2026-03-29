@@ -2,16 +2,9 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Navbar } from "@/components/layout";
 import { ProfilePage } from "./ProfilePage";
+import type { Profile } from "@/types/database";
 
 export const dynamic = "force-dynamic";
-
-type Profile = {
-  id: string;
-  username: string | null;
-  avatar_url: string | null;
-  bio: string | null;
-  created_at: string;
-};
 
 type Post = {
   id: string;
