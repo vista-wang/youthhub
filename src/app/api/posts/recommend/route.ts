@@ -2,6 +2,20 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { transformPostsWithAuthor } from "@/lib/utils";
 
+type UserKeyword = { keyword: string; weight: number };
+type PostKeyword = { post_id: string; keyword: string; relevance: number };
+type Post = {
+  id: string;
+  title: string;
+  content: string;
+  likes_count: number;
+  comments_count: number;
+  created_at: string;
+  updated_at: string;
+  author_id: string;
+  profiles?: { username: string; avatar_url: string | null } | null;
+};
+
 export async function GET() {
   try {
     const supabase = await createClient();
@@ -21,24 +35,28 @@ export async function GET() {
       .order("weight", { ascending: false })
       .limit(10);
 
-    if (!userKeywords || userKeywords.length === 0) {
+    const typedUserKeywords = (userKeywords as UserKeyword[] | null) || [];
+
+    if (typedUserKeywords.length === 0) {
       return NextResponse.json({ posts: [], reason: "no_keywords" });
     }
 
-    const keywords = userKeywords.map((k) => k.keyword);
+    const keywords = typedUserKeywords.map((k) => k.keyword);
 
     const { data: postKeywords } = await supabase
       .from("post_keywords")
       .select("post_id, keyword, relevance")
       .in("keyword", keywords);
 
-    if (!postKeywords || postKeywords.length === 0) {
+    const typedPostKeywords = (postKeywords as PostKeyword[] | null) || [];
+
+    if (typedPostKeywords.length === 0) {
       return NextResponse.json({ posts: [], reason: "no_matching_posts" });
     }
 
     const postScores: Record<string, number> = {};
-    postKeywords.forEach((pk) => {
-      const userKeyword = userKeywords.find((k) => k.keyword === pk.keyword);
+    typedPostKeywords.forEach((pk) => {
+      const userKeyword = typedUserKeywords.find((k) => k.keyword === pk.keyword);
       if (userKeyword) {
         postScores[pk.post_id] = (postScores[pk.post_id] || 0) + userKeyword.weight * pk.relevance;
       }
@@ -79,8 +97,10 @@ export async function GET() {
       );
     }
 
+    const typedPosts = (posts as Post[] | null) || [];
+
     const sortedPosts = sortedPostIds
-      .map((id) => posts?.find((p) => p.id === id))
+      .map((id) => typedPosts.find((p) => p.id === id))
       .filter(Boolean);
 
     return NextResponse.json({ 
