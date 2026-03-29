@@ -31,5 +31,5 @@ export const EMOJI_LIST = [
 ] as const;
 
 export function getRandomEmoji(): string {
-  return EMOJI_LIST[Math.floor(Math.random() * EMOJI_LIST.length)];
+  return EMOJI_LIST[Math.floor(Math.random() * EMOJI_LIST.length)] ?? "😊";
 }
