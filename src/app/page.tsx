@@ -14,6 +14,12 @@ type Keyword = {
   weight: number;
 };
 
+type PostKeyword = {
+  post_id: string;
+  keyword: string;
+  relevance: number;
+};
+
 type Post = {
   id: string;
   title: string;
@@ -140,13 +146,15 @@ export default async function Home() {
         .select("post_id, keyword, relevance")
         .in("keyword", userKeywords);
 
-      if (postKeywords && postKeywords.length > 0) {
+      const typedPostKeywords = (postKeywords as PostKeyword[] | null) || [];
+
+      if (typedPostKeywords.length > 0) {
         const userKeywordWeights = new Map(
           typedKeywords.map((k) => [k.keyword, k.weight])
         );
         
         const postScores: Record<string, number> = {};
-        postKeywords.forEach((pk) => {
+        typedPostKeywords.forEach((pk) => {
           const weight = userKeywordWeights.get(pk.keyword) || 1;
           postScores[pk.post_id] = (postScores[pk.post_id] || 0) + weight * pk.relevance;
         });
