@@ -6,13 +6,27 @@ interface CreateClientOptions {
   useServiceRole?: boolean;
 }
 
+type CookieToSet = {
+  name: string;
+  value: string;
+  options?: {
+    domain?: string;
+    path?: string;
+    expires?: Date;
+    httpOnly?: boolean;
+    maxAge?: number;
+    sameSite?: boolean | "lax" | "strict" | "none";
+    secure?: boolean;
+  };
+};
+
 async function createSupabaseClient(options: CreateClientOptions = {}) {
   const { useServiceRole = false } = options;
   const cookieStore = await cookies();
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseUrl = process.env["NEXT_PUBLIC_SUPABASE_URL"];
+  const supabaseAnonKey = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"];
+  const supabaseServiceKey = process.env["SUPABASE_SERVICE_ROLE_KEY"];
 
   if (!supabaseUrl) {
     throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL");
@@ -33,7 +47,7 @@ async function createSupabaseClient(options: CreateClientOptions = {}) {
       getAll() {
         return cookieStore.getAll();
       },
-      setAll(cookiesToSet) {
+      setAll(cookiesToSet: CookieToSet[]) {
         try {
           cookiesToSet.forEach(({ name, value, options }) =>
             cookieStore.set(name, value, options)
