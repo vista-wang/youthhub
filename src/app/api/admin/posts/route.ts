@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
       .select("*", { count: "exact", head: true });
 
     return NextResponse.json({
-      posts: posts?.map((post) => ({
+      posts: posts?.map((post: any) => ({
         ...post,
         author_name: post.profiles?.username || "匿名用户",
         author_avatar: post.profiles?.avatar_url || null,
