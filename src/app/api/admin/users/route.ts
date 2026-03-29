@@ -17,7 +17,7 @@ async function checkAdmin() {
     .eq("id", user.id)
     .single();
 
-  const role = (profile as { role: string } | null)?.role;
+  const role = (profile as { role: string } | null)?.role || "";
   if (!profile || !["admin", "moderator"].includes(role)) {
     return { authorized: false as const, error: "权限不足", status: 403 };
   }
