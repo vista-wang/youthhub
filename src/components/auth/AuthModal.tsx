@@ -47,7 +47,7 @@ export function AuthModal({
     setError(null);
     setIsLoading(true);
 
-    const supabase = createClient();
+    const supabase = createClient() as any;
 
     try {
       if (mode === "register") {
