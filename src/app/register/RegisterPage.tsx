@@ -31,7 +31,7 @@ export function RegisterPage() {
 
     setIsLoading(true);
 
-    const supabase = createClient();
+    const supabase = createClient() as any;
 
     try {
       const { data, error: signUpError } = await supabase.auth.signUp({
