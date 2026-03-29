@@ -5,6 +5,11 @@ import { CreatePostPage } from "./CreatePostPage";
 
 export const dynamic = "force-dynamic";
 
+type Profile = {
+  username: string | null;
+  avatar_url: string | null;
+};
+
 export default async function CreatePost() {
   const supabase = await createClient();
   
@@ -22,12 +27,14 @@ export default async function CreatePost() {
     .eq("id", user.id)
     .single();
 
+  const typedProfile = profile as Profile | null;
+
   return (
     <>
       <Navbar 
         user={user} 
-        username={profile?.username} 
-        avatarUrl={profile?.avatar_url}
+        username={typedProfile?.username} 
+        avatarUrl={typedProfile?.avatar_url}
       />
       <CreatePostPage />
     </>

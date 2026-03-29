@@ -5,6 +5,26 @@ import { ProfilePage } from "./ProfilePage";
 
 export const dynamic = "force-dynamic";
 
+type Profile = {
+  id: string;
+  username: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+  created_at: string;
+};
+
+type Post = {
+  id: string;
+  title: string;
+  content: string;
+  likes_count: number;
+  comments_count: number;
+  created_at: string;
+  updated_at: string;
+  author_id: string;
+  profiles?: { username: string | null; avatar_url: string | null } | null;
+};
+
 export default async function Profile() {
   const supabase = await createClient();
   
@@ -21,6 +41,8 @@ export default async function Profile() {
     .select("*")
     .eq("id", user.id)
     .single();
+
+  const typedProfile = profile as Profile | null;
 
   const { data: posts } = await supabase
     .from("posts")
@@ -43,21 +65,23 @@ export default async function Profile() {
     .order("created_at", { ascending: false })
     .limit(10);
 
-  const postsWithAuthor = posts?.map((post) => ({
+  const typedPosts = (posts as Post[] | null) || [];
+
+  const postsWithAuthor = typedPosts.map((post) => ({
     ...post,
     author_name: post.profiles?.username || "匿名用户",
     author_avatar: post.profiles?.avatar_url || null,
-  })) || [];
+  }));
 
   return (
     <>
       <Navbar 
         user={user} 
-        username={profile?.username} 
-        avatarUrl={profile?.avatar_url}
+        username={typedProfile?.username} 
+        avatarUrl={typedProfile?.avatar_url}
       />
       <ProfilePage 
-        profile={profile}
+        profile={typedProfile}
         posts={postsWithAuthor}
       />
     </>

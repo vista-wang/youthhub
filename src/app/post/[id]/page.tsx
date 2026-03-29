@@ -2,12 +2,71 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Navbar } from "@/components/layout";
 import { PostDetailPage } from "./PostDetailPage";
-import { transformPostWithAuthor, transformCommentsWithAuthor } from "@/lib/utils";
 
 interface PostPageProps {
   params: Promise<{
     id: string;
   }>;
+}
+
+type Profile = {
+  username: string | null;
+  avatar_url: string | null;
+};
+
+type Post = {
+  id: string;
+  title: string;
+  content: string;
+  likes_count: number;
+  comments_count: number;
+  created_at: string;
+  updated_at: string;
+  author_id: string;
+  profiles?: { username: string | null; avatar_url: string | null } | null;
+};
+
+type Comment = {
+  id: string;
+  post_id: string;
+  parent_id: string | null;
+  content: string;
+  likes_count: number;
+  created_at: string;
+  updated_at: string;
+  author_id: string;
+  profiles?: { username: string | null; avatar_url: string | null } | null;
+};
+
+function transformPost(post: Post) {
+  return {
+    id: post.id,
+    title: post.title,
+    content: post.content,
+    likes_count: post.likes_count,
+    comments_count: post.comments_count,
+    created_at: post.created_at,
+    updated_at: post.updated_at,
+    author_id: post.author_id,
+    author_name: post.profiles?.username || "匿名用户",
+    author_avatar: post.profiles?.avatar_url || null,
+  };
+}
+
+function transformComments(comments: Comment[] | null) {
+  if (!comments) return [];
+  return comments.map((comment) => ({
+    id: comment.id,
+    post_id: comment.post_id,
+    parent_id: comment.parent_id,
+    content: comment.content,
+    likes_count: comment.likes_count,
+    created_at: comment.created_at,
+    updated_at: comment.updated_at,
+    author_id: comment.author_id,
+    author_name: comment.profiles?.username || "匿名用户",
+    author_avatar: comment.profiles?.avatar_url || null,
+  }));
 }
 
 export const dynamic = "force-dynamic";
@@ -80,16 +139,18 @@ export default async function PostPage({ params }: PostPageProps) {
     notFound();
   }
 
+  const typedProfile = profile as Profile | null;
+
   return (
     <>
       <Navbar 
         user={user} 
-        username={profile?.username} 
-        avatarUrl={profile?.avatar_url}
+        username={typedProfile?.username} 
+        avatarUrl={typedProfile?.avatar_url}
       />
       <PostDetailPage
-        post={transformPostWithAuthor(post)}
-        comments={transformCommentsWithAuthor(comments)}
+        post={transformPost(post as Post)}
+        comments={transformComments(comments as Comment[] | null)}
         isLoggedIn={!!user}
         currentUserId={user?.id}
         isLiked={!!likeData}
