@@ -21,9 +21,9 @@ const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
     const initials = React.useMemo(() => {
       if (fallback) return fallback.slice(0, 2).toUpperCase();
       if (alt) {
-        const words = alt.split(" ");
-        if (words.length >= 2) {
-          return (words[0][0] + words[1][0]).toUpperCase();
+        const words = alt.split(" ").filter(w => w.length > 0);
+        if (words.length >= 2 && words[0] && words[1]) {
+          return ((words[0][0] || "") + (words[1][0] || "")).toUpperCase();
         }
         return alt.slice(0, 2).toUpperCase();
       }
