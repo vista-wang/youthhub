@@ -1,27 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { checkAdminPermission } from "@/lib/auth/admin";
 
 export async function GET() {
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "请先登录" }, { status: 401 });
+    const auth = await checkAdminPermission();
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile || !["admin", "moderator"].includes(profile.role)) {
-      return NextResponse.json({ error: "权限不足" }, { status: 403 });
-    }
+    const { supabase } = auth;
 
     const { data: announcements, error } = await supabase
       .from("announcements")
@@ -41,25 +27,11 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "请先登录" }, { status: 401 });
+    const auth = await checkAdminPermission();
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile || !["admin", "moderator"].includes(profile.role)) {
-      return NextResponse.json({ error: "权限不足" }, { status: 403 });
-    }
+    const { supabase, userId } = auth;
 
     const body = await request.json();
     const { title, content, type, priority, is_active, start_at, end_at } = body;
@@ -87,7 +59,7 @@ export async function POST(request: NextRequest) {
     }
 
     await supabase.from("admin_logs").insert({
-      admin_id: user.id,
+      admin_id: userId,
       action: "create_announcement",
       target_type: "announcement",
       target_id: announcement.id,
@@ -102,25 +74,11 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "请先登录" }, { status: 401 });
+    const auth = await checkAdminPermission();
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile || !["admin", "moderator"].includes(profile.role)) {
-      return NextResponse.json({ error: "权限不足" }, { status: 403 });
-    }
+    const { supabase, userId } = auth;
 
     const body = await request.json();
     const { id, title, content, type, priority, is_active, start_at, end_at } = body;
@@ -149,7 +107,7 @@ export async function PUT(request: NextRequest) {
     }
 
     await supabase.from("admin_logs").insert({
-      admin_id: user.id,
+      admin_id: userId,
       action: "update_announcement",
       target_type: "announcement",
       target_id: id,
@@ -164,25 +122,11 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "请先登录" }, { status: 401 });
+    const auth = await checkAdminPermission();
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile || !["admin", "moderator"].includes(profile.role)) {
-      return NextResponse.json({ error: "权限不足" }, { status: 403 });
-    }
+    const { supabase, userId } = auth;
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
@@ -201,7 +145,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     await supabase.from("admin_logs").insert({
-      admin_id: user.id,
+      admin_id: userId,
       action: "delete_announcement",
       target_type: "announcement",
       target_id: id,

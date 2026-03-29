@@ -1,27 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { checkAdminPermission } from "@/lib/auth/admin";
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "请先登录" }, { status: 401 });
+    const auth = await checkAdminPermission();
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile || !["admin", "moderator"].includes(profile.role)) {
-      return NextResponse.json({ error: "权限不足" }, { status: 403 });
-    }
+    const { supabase } = auth;
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
@@ -59,37 +45,23 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "请先登录" }, { status: 401 });
+    const auth = await checkAdminPermission();
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
-
-    const { data: adminProfile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if (!adminProfile || !["admin", "moderator"].includes(adminProfile.role)) {
-      return NextResponse.json({ error: "权限不足" }, { status: 403 });
-    }
+    const { supabase, userId } = auth;
 
     const body = await request.json();
-    const { userId, action, reason } = body;
+    const { userId: targetUserId, action, reason } = body;
 
-    if (!userId || !action) {
+    if (!targetUserId || !action) {
       return NextResponse.json({ error: "参数不完整" }, { status: 400 });
     }
 
     const { data: targetProfile } = await supabase
       .from("profiles")
       .select("role")
-      .eq("id", userId)
+      .eq("id", targetUserId)
       .single();
 
     if (targetProfile?.role === "admin") {
@@ -104,17 +76,17 @@ export async function POST(request: NextRequest) {
           ban_reason: reason || null,
           banned_at: new Date().toISOString(),
         })
-        .eq("id", userId);
+        .eq("id", targetUserId);
 
       if (updateError) {
         return NextResponse.json({ error: "封禁用户失败" }, { status: 500 });
       }
 
       await supabase.from("admin_logs").insert({
-        admin_id: user.id,
+        admin_id: userId,
         action: "ban_user",
         target_type: "user",
-        target_id: userId,
+        target_id: targetUserId,
         details: { reason },
       });
 
@@ -129,17 +101,17 @@ export async function POST(request: NextRequest) {
           ban_reason: null,
           banned_at: null,
         })
-        .eq("id", userId);
+        .eq("id", targetUserId);
 
       if (updateError) {
         return NextResponse.json({ error: "解封用户失败" }, { status: 500 });
       }
 
       await supabase.from("admin_logs").insert({
-        admin_id: user.id,
+        admin_id: userId,
         action: "unban_user",
         target_type: "user",
-        target_id: userId,
+        target_id: targetUserId,
       });
 
       return NextResponse.json({ success: true, message: "用户已解封" });

@@ -1,27 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { checkAdminPermission } from "@/lib/auth/admin";
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "请先登录" }, { status: 401 });
+    const auth = await checkAdminPermission();
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile || !["admin", "moderator"].includes(profile.role)) {
-      return NextResponse.json({ error: "权限不足" }, { status: 403 });
-    }
+    const { supabase } = auth;
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
@@ -80,25 +66,11 @@ export async function GET(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "请先登录" }, { status: 401 });
+    const auth = await checkAdminPermission();
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile || !["admin", "moderator"].includes(profile.role)) {
-      return NextResponse.json({ error: "权限不足" }, { status: 403 });
-    }
+    const { supabase, userId } = auth;
 
     const body = await request.json();
     const { postId, reason } = body;
@@ -117,7 +89,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     await supabase.from("admin_logs").insert({
-      admin_id: user.id,
+      admin_id: userId,
       action: "delete_post",
       target_type: "post",
       target_id: postId,
@@ -132,25 +104,11 @@ export async function DELETE(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "请先登录" }, { status: 401 });
+    const auth = await checkAdminPermission();
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile || !["admin", "moderator"].includes(profile.role)) {
-      return NextResponse.json({ error: "权限不足" }, { status: 403 });
-    }
+    const { supabase, userId } = auth;
 
     const body = await request.json();
     const { postId } = body;
@@ -169,7 +127,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     await supabase.from("admin_logs").insert({
-      admin_id: user.id,
+      admin_id: userId,
       action: "restore_post",
       target_type: "post",
       target_id: postId,
