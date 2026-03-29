@@ -8,7 +8,7 @@ interface Params {
 }
 
 export async function POST(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: Params
 ) {
   try {
@@ -66,7 +66,7 @@ export async function POST(
 }
 
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: Params
 ) {
   try {
