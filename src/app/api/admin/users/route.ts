@@ -1,9 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
-import { checkAdminPermission } from "@/lib/auth/admin";
+import { createClient } from "@/lib/supabase/server";
+
+async function checkAdmin() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { authorized: false as const, error: "请先登录", status: 401 };
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  const role = (profile as { role: string } | null)?.role;
+  if (!profile || !["admin", "moderator"].includes(role)) {
+    return { authorized: false as const, error: "权限不足", status: 403 };
+  }
+
+  return { authorized: true as const, supabase, userId: user.id };
+}
 
 export async function GET(request: NextRequest) {
   try {
-    const auth = await checkAdminPermission();
+    const auth = await checkAdmin();
     if (!auth.authorized) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
@@ -45,7 +69,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const auth = await checkAdminPermission();
+    const auth = await checkAdmin();
     if (!auth.authorized) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
@@ -64,7 +88,8 @@ export async function POST(request: NextRequest) {
       .eq("id", targetUserId)
       .single();
 
-    if (targetProfile?.role === "admin") {
+    const targetRole = (targetProfile as { role: string } | null)?.role;
+    if (targetRole === "admin") {
       return NextResponse.json({ error: "无法封禁管理员" }, { status: 400 });
     }
 
