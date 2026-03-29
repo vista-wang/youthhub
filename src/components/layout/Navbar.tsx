@@ -92,6 +92,9 @@ export function Navbar({ user, username, avatarUrl }: NavbarProps) {
               </div>
             </div>
             <span className="text-xl font-bold gradient-text">友料</span>
+            <span className="ml-1 rounded-full bg-gradient-to-r from-dopamine-orange to-dopamine-pink px-2 py-0.5 text-xs font-medium text-white shadow-sm">
+              公测版
+            </span>
           </Link>
 
           <div className="hidden items-center gap-2 md:flex">
