@@ -1,2 +1,2 @@
-export { DFASensitiveWordFilter, getFilterInstance, getSensitiveWords, checkContentWithDFA, checkContent, quickCheckContent } from "./dfa-filter";
-export { RecommendationEngine, getRecommendationEngine, rankPosts, getHotPosts, recommendForUser } from "./recommendation";
+export { getFilterInstance, checkContentWithDFA } from "./dfa-filter";
+export { getRecommendationEngine, rankPosts, getHotPosts, recommendForUser } from "./recommendation";

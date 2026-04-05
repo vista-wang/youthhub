@@ -1,0 +1,101 @@
+14:35:11.613  ⚠ Compiled with warnings in 6.2s
+14:35:11.614 
+14:35:11.614 ./src/lib/algorithms/index.ts
+14:35:11.615 export 'DFASensitiveWordFilter' (reexported as 'DFASensitiveWordFilter') was not found in './dfa-filter' (possible exports: checkContent, checkContentWithDFA, getFilterInstance, getSensitiveWords, quickCheckContent)
+14:35:11.615 
+14:35:11.615 Import trace for requested module:
+14:35:11.615 ./src/lib/algorithms/index.ts
+14:35:11.615 ./src/lib/utils.ts
+14:35:11.616 ./src/components/ui/emoji-picker.tsx
+14:35:11.616 
+14:35:11.616 ./src/lib/algorithms/index.ts
+14:35:11.616 export 'RecommendationEngine' (reexported as 'RecommendationEngine') was not found in './recommendation' (possible exports: getHotPosts, getRecommendationEngine, rankPosts, recommendForUser)
+14:35:11.617 
+14:35:11.617 Import trace for requested module:
+14:35:11.617 ./src/lib/algorithms/index.ts
+14:35:11.618 ./src/lib/utils.ts
+14:35:11.621 ./src/components/ui/emoji-picker.tsx
+14:35:11.621 
+14:35:11.621 ./src/lib/algorithms/index.ts
+14:35:11.621 export 'DFASensitiveWordFilter' (reexported as 'DFASensitiveWordFilter') was not found in './dfa-filter' (possible exports: checkContent, checkContentWithDFA, getFilterInstance, getSensitiveWords, quickCheckContent)
+14:35:11.621 
+14:35:11.622 Import trace for requested module:
+14:35:11.622 ./src/lib/algorithms/index.ts
+14:35:11.622 ./src/lib/utils.ts
+14:35:11.622 ./src/app/page.tsx
+14:35:11.622 
+14:35:11.622 ./src/lib/algorithms/index.ts
+14:35:11.622 export 'RecommendationEngine' (reexported as 'RecommendationEngine') was not found in './recommendation' (possible exports: getHotPosts, getRecommendationEngine, rankPosts, recommendForUser)
+14:35:11.622 
+14:35:11.622 Import trace for requested module:
+14:35:11.622 ./src/lib/algorithms/index.ts
+14:35:11.622 ./src/lib/utils.ts
+14:35:11.622 ./src/app/page.tsx
+14:35:11.622 
+14:35:14.194 <w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (215kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+14:35:19.083 Failed to compile.
+14:35:19.083 
+14:35:19.084 ./src/app/globals.css.webpack[javascript/auto]!=!./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[10].use[2]!./node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[14].oneOf[10].use[3]!./src/app/globals.css
+14:35:19.084 ReferenceError: module is not defined in ES module scope
+14:35:19.085     at file:///vercel/path0/postcss.config.mjs:9:1
+14:35:19.085     at ModuleJob.run (node:internal/modules/esm/module_job:430:25)
+14:35:19.085     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:661:26)
+14:35:19.085     at async findConfig (/vercel/path0/node_modules/next/dist/lib/find-config.js:90:21)
+14:35:19.085     at async getPostCssPlugins (/vercel/path0/node_modules/next/dist/build/webpack/config/blocks/css/plugins.js:93:18)
+14:35:19.089     at async /vercel/path0/node_modules/next/dist/build/webpack/config/blocks/css/index.js:125:36
+14:35:19.089     at async /vercel/path0/node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js:52:40
+14:35:19.090     at async Span.traceAsyncFn (/vercel/path0/node_modules/next/dist/trace/trace.js:157:20)
+14:35:19.090 
+14:35:19.090 Import trace for requested module:
+14:35:19.090 ./src/app/globals.css.webpack[javascript/auto]!=!./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[10].use[2]!./node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[14].oneOf[10].use[3]!./src/app/globals.css
+14:35:19.090 ./src/app/globals.css
+14:35:19.090 
+14:35:19.090 ./src/app/globals.css
+14:35:19.090 ReferenceError: module is not defined in ES module scope
+14:35:19.090     at file:///vercel/path0/postcss.config.mjs:9:1
+14:35:19.090     at ModuleJob.run (node:internal/modules/esm/module_job:430:25)
+14:35:19.090     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:661:26)
+14:35:19.091     at async findConfig (/vercel/path0/node_modules/next/dist/lib/find-config.js:90:21)
+14:35:19.091     at async getPostCssPlugins (/vercel/path0/node_modules/next/dist/build/webpack/config/blocks/css/plugins.js:93:18)
+14:35:19.093     at async /vercel/path0/node_modules/next/dist/build/webpack/config/blocks/css/index.js:125:36
+14:35:19.093     at async /vercel/path0/node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js:52:40
+14:35:19.093     at async Span.traceAsyncFn (/vercel/path0/node_modules/next/dist/trace/trace.js:157:20)
+14:35:19.093     at tryRunOrWebpackError (/vercel/path0/node_modules/next/dist/compiled/webpack/bundle5.js:29:316119)
+14:35:19.093     at __webpack_require_module__ (/vercel/path0/node_modules/next/dist/compiled/webpack/bundle5.js:29:131532)
+14:35:19.093     at __nested_webpack_require_161494__ (/vercel/path0/node_modules/next/dist/compiled/webpack/bundle5.js:29:130967)
+14:35:19.093     at /vercel/path0/node_modules/next/dist/compiled/webpack/bundle5.js:29:131824
+14:35:19.093     at symbolIterator (/vercel/path0/node_modules/next/dist/compiled/neo-async/async.js:1:14444)
+14:35:19.093     at done (/vercel/path0/node_modules/next/dist/compiled/neo-async/async.js:1:14824)
+14:35:19.094     at Hook.eval [as callAsync] (eval at create (/vercel/path0/node_modules/next/dist/compiled/webpack/bundle5.js:14:9224), <anonymous>:15:1)
+14:35:19.094     at Hook.CALL_ASYNC_DELEGATE [as _callAsync] (/vercel/path0/node_modules/next/dist/compiled/webpack/bundle5.js:14:6378)
+14:35:19.094     at /vercel/path0/node_modules/next/dist/compiled/webpack/bundle5.js:29:130687
+14:35:19.094     at symbolIterator (/vercel/path0/node_modules/next/dist/compiled/neo-async/async.js:1:14402)
+14:35:19.094 -- inner error --
+14:35:19.094 ReferenceError: module is not defined in ES module scope
+14:35:19.094     at file:///vercel/path0/postcss.config.mjs:9:1
+14:35:19.094     at ModuleJob.run (node:internal/modules/esm/module_job:430:25)
+14:35:19.094     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:661:26)
+14:35:19.094     at async findConfig (/vercel/path0/node_modules/next/dist/lib/find-config.js:90:21)
+14:35:19.094     at async getPostCssPlugins (/vercel/path0/node_modules/next/dist/build/webpack/config/blocks/css/plugins.js:93:18)
+14:35:19.094     at async /vercel/path0/node_modules/next/dist/build/webpack/config/blocks/css/index.js:125:36
+14:35:19.094     at async /vercel/path0/node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js:52:40
+14:35:19.094     at async Span.traceAsyncFn (/vercel/path0/node_modules/next/dist/trace/trace.js:157:20)
+14:35:19.094     at Object.<anonymous> (/vercel/path0/node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[10].use[2]!/vercel/path0/node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[14].oneOf[10].use[3]!/vercel/path0/src/app/globals.css:1:7)
+14:35:19.094     at /vercel/path0/node_modules/next/dist/compiled/webpack/bundle5.js:29:962717
+14:35:19.094     at Hook.eval [as call] (eval at create (/vercel/path0/node_modules/next/dist/compiled/webpack/bundle5.js:14:9002), <anonymous>:7:1)
+14:35:19.094     at Hook.CALL_DELEGATE [as _call] (/vercel/path0/node_modules/next/dist/compiled/webpack/bundle5.js:14:6272)
+14:35:19.094     at /vercel/path0/node_modules/next/dist/compiled/webpack/bundle5.js:29:131565
+14:35:19.094     at tryRunOrWebpackError (/vercel/path0/node_modules/next/dist/compiled/webpack/bundle5.js:29:316073)
+14:35:19.094     at __webpack_require_module__ (/vercel/path0/node_modules/next/dist/compiled/webpack/bundle5.js:29:131532)
+14:35:19.094     at __nested_webpack_require_161494__ (/vercel/path0/node_modules/next/dist/compiled/webpack/bundle5.js:29:130967)
+14:35:19.094     at /vercel/path0/node_modules/next/dist/compiled/webpack/bundle5.js:29:131824
+14:35:19.094     at symbolIterator (/vercel/path0/node_modules/next/dist/compiled/neo-async/async.js:1:14444)
+14:35:19.094 
+14:35:19.094 Generated code for /vercel/path0/node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[10].use[2]!/vercel/path0/node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[14].oneOf[10].use[3]!/vercel/path0/src/app/globals.css
+14:35:19.094 
+14:35:19.094 Import trace for requested module:
+14:35:19.094 ./src/app/globals.css
+14:35:19.095 
+14:35:19.103 
+14:35:19.104 > Build failed because of webpack errors
+14:35:19.136 Error: Command "npm run build" exited with 1
