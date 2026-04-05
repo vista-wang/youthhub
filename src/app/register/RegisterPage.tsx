@@ -7,6 +7,7 @@ import { Sparkles, ArrowLeft, Loader2, Mail, Lock, User, Eye, EyeOff } from "luc
 import { Button } from "@/components/ui";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Turnstile, useTurnstile } from "@/components/ui/turnstile";
 import { createClient } from "@/lib/supabase/client";
 import { validateUsername } from "@/lib/utils";
 
@@ -14,14 +15,27 @@ export function RegisterPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [username, setUsername] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const turnstile = useTurnstile();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!turnstile.verified) {
+      setError("请完成人机验证");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("两次输入的密码不一致，请重新确认");
+      return;
+    }
 
     const usernameValidation = validateUsername(username);
     if (!usernameValidation.isValid) {
@@ -41,6 +55,7 @@ export function RegisterPage() {
           data: {
             username,
           },
+          captchaToken: turnstile.token,
         },
       });
 
@@ -152,6 +167,44 @@ export function RegisterPage() {
                 </button>
               </div>
 
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="确认密码（再次输入密码）"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className={`pl-10 pr-10 ${confirmPassword && password !== confirmPassword ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' : ''}`}
+                  required
+                  minLength={6}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+
+              <div className="flex justify-center py-2">
+                <Turnstile 
+                  onVerify={turnstile.onVerify} 
+                  onError={turnstile.onError} 
+                  onExpire={turnstile.onExpire} 
+                />
+              </div>
+
+              {!turnstile.verified && (
+                <p className="text-xs text-amber-600 bg-amber-50 rounded-lg p-2 text-center">
+                  请完成上方人机验证后注册
+                </p>
+              )}
+
               {error && (
                 <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
                   {error}
@@ -162,7 +215,7 @@ export function RegisterPage() {
                 type="submit"
                 variant="dopamine"
                 className="w-full"
-                disabled={isLoading}
+                disabled={isLoading || !turnstile.verified || !password || !confirmPassword}
               >
                 {isLoading ? (
                   <>

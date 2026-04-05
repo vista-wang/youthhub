@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Plus, RefreshCw, Inbox } from "lucide-react";
 import Link from "next/link";
 import { PostCard, RecommendedPosts } from "@/components/post";
@@ -65,23 +65,23 @@ export function HomePage({
     }
   }, []);
 
-  const handleAuthSuccess = () => {
+  const handleAuthSuccess = useCallback(() => {
     setShowAuthModal(false);
     window.location.reload();
-  };
+  }, []);
 
-  const openAuthModal = (mode: "login" | "register") => {
+  const openAuthModal = useCallback((mode: "login" | "register") => {
     setShowAuthModal(true);
     setAuthModalMode(mode);
-  };
+  }, []);
 
-  const tabs: { key: TabType; label: string; icon: React.ReactNode }[] = [
+  const tabs = useMemo<Array<{ key: TabType; label: string; icon: React.ReactNode }>>(() => [
     { key: "latest", label: "最新", icon: <RefreshCw className="h-4 w-4" /> },
     { key: "hot", label: "热门", icon: <span className="text-sm">🔥</span> },
     ...(isLoggedIn ? [{ key: "recommend" as TabType, label: "推荐", icon: <span className="text-sm">✨</span> }] : []),
-  ];
+  ], [isLoggedIn]);
 
-  const getDisplayPosts = (): PostWithAuthor[] => {
+  const displayPosts = useMemo((): PostWithAuthor[] => {
     switch (activeTab) {
       case "hot":
         return hotPosts;
@@ -90,9 +90,7 @@ export function HomePage({
       default:
         return posts;
     }
-  };
-
-  const displayPosts = getDisplayPosts();
+  }, [activeTab, hotPosts, recommendedPosts, posts]);
 
   const renderPosts = () => {
     if (displayPosts.length === 0) {

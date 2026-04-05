@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { X, LogOut, Sparkles, Menu, User } from "lucide-react";
+import { X, LogOut, Sparkles, Menu, User, Megaphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { NAV_ITEMS, AUTH_PATHS } from "@/lib/navigation";
+import { AnnouncementModal, AnnouncementButton } from "./AnnouncementModal";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface NavbarProps {
@@ -19,6 +20,7 @@ interface NavbarProps {
 export function Navbar({ user, username, avatarUrl }: NavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [showAnnouncement, setShowAnnouncement] = useState(false);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -98,6 +100,7 @@ export function Navbar({ user, username, avatarUrl }: NavbarProps) {
           </Link>
 
           <div className="hidden items-center gap-2 md:flex">
+            <AnnouncementButton onClick={() => setShowAnnouncement(true)} />
             {NAV_ITEMS.map((item) => renderNavItem(item))}
           </div>
 
@@ -153,6 +156,17 @@ export function Navbar({ user, username, avatarUrl }: NavbarProps) {
       >
         <div className="mx-auto max-w-4xl px-4 py-4">
           <div className="flex flex-col gap-2">
+            <button
+              className="flex items-center gap-3 rounded-lg px-4 py-3 text-dopamine-pink bg-gradient-to-r from-dopamine-orange/10 to-dopamine-pink/10 transition-colors hover:from-dopamine-orange/20 hover:to-dopamine-pink/20"
+              onClick={() => {
+                setIsMenuOpen(false);
+                setShowAnnouncement(true);
+              }}
+            >
+              <Megaphone className="h-5 w-5" />
+              系统公告
+            </button>
+            
             {NAV_ITEMS.map((item) => renderNavItem(item, true))}
             
             <div className="my-2 h-px bg-gray-100" />
@@ -197,6 +211,11 @@ export function Navbar({ user, username, avatarUrl }: NavbarProps) {
           </div>
         </div>
       </div>
+
+      <AnnouncementModal
+        isOpen={showAnnouncement}
+        onClose={() => setShowAnnouncement(false)}
+      />
     </nav>
   );
 }

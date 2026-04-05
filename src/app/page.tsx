@@ -1,52 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { Navbar } from "@/components/layout";
 import { HomePage } from "./HomePage";
+import { transformPostsWithAuthor, calculatePostScores, getTopPostIds } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
-
-type Profile = {
-  username: string | null;
-  avatar_url: string | null;
-};
-
-type Keyword = {
-  keyword: string;
-  weight: number;
-};
-
-type PostKeyword = {
-  post_id: string;
-  keyword: string;
-  relevance: number;
-};
-
-type Post = {
-  id: string;
-  title: string;
-  content: string;
-  likes_count: number;
-  comments_count: number;
-  created_at: string;
-  updated_at: string;
-  author_id: string;
-  profiles?: { username: string | null; avatar_url: string | null } | null;
-};
-
-function transformPosts(posts: Post[] | null | undefined) {
-  if (!posts) return [];
-  return posts.map((post) => ({
-    id: post.id,
-    title: post.title,
-    content: post.content,
-    likes_count: post.likes_count,
-    comments_count: post.comments_count,
-    created_at: post.created_at,
-    updated_at: post.updated_at,
-    author_id: post.author_id,
-    author_name: post.profiles?.username || "匿名用户",
-    author_avatar: post.profiles?.avatar_url || null,
-  }));
-}
 
 export default async function Home() {
   const supabase = await createClient();
@@ -72,7 +29,7 @@ export default async function Home() {
         created_at,
         updated_at,
         author_id,
-        profiles!posts_author_id_fkey (
+        profiles:author_id (
           username,
           avatar_url
         )
@@ -107,7 +64,7 @@ export default async function Home() {
         created_at,
         updated_at,
         author_id,
-        profiles!posts_author_id_fkey (
+        profiles:author_id (
           username,
           avatar_url
         )
@@ -118,51 +75,43 @@ export default async function Home() {
       .limit(5),
   ]);
 
-  let profile: Profile | null = null;
+  let profile: { username: string | null; avatar_url: string | null } | null = null;
   let userKeywords: string[] = [];
-  let recommendedPosts: Post[] | null = null;
+  let recommendedPosts: any[] | null = null;
 
   if (user) {
-    const { data: profileData } = await supabase
-      .from("profiles")
-      .select("username, avatar_url")
-      .eq("id", user.id)
-      .single();
-    profile = profileData as Profile | null;
+    const [profileResult, keywordsResult] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select("username, avatar_url")
+        .eq("id", user.id)
+        .single(),
+      supabase
+        .from("user_keywords")
+        .select("keyword, weight")
+        .eq("user_id", user.id)
+        .order("weight", { ascending: false })
+        .limit(10),
+    ]);
 
-    const { data: keywordsData } = await supabase
-      .from("user_keywords")
-      .select("keyword, weight")
-      .eq("user_id", user.id)
-      .order("weight", { ascending: false })
-      .limit(10);
+    profile = profileResult.data as { username: string | null; avatar_url: string | null } | null;
     
-    const typedKeywords = (keywordsData as Keyword[] | null) || [];
+    const typedKeywords = (keywordsResult.data as Array<{ keyword: string; weight: number }> | null) || [];
     userKeywords = typedKeywords.map((k) => k.keyword);
 
     if (userKeywords.length > 0) {
+      const userKeywordWeights = new Map(typedKeywords.map((k) => [k.keyword, k.weight]));
+
       const { data: postKeywords } = await supabase
         .from("post_keywords")
         .select("post_id, keyword, relevance")
         .in("keyword", userKeywords);
 
-      const typedPostKeywords = (postKeywords as PostKeyword[] | null) || [];
+      const typedPostKeywords = (postKeywords as Array<{ post_id: string; keyword: string; relevance: number }> | null) || [];
 
       if (typedPostKeywords.length > 0) {
-        const userKeywordWeights = new Map(
-          typedKeywords.map((k) => [k.keyword, k.weight])
-        );
-        
-        const postScores: Record<string, number> = {};
-        typedPostKeywords.forEach((pk) => {
-          const weight = userKeywordWeights.get(pk.keyword) || 1;
-          postScores[pk.post_id] = (postScores[pk.post_id] || 0) + weight * pk.relevance;
-        });
-
-        const sortedPostIds = Object.entries(postScores)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 5)
-          .map(([id]) => id);
+        const postScores = calculatePostScores(typedPostKeywords, userKeywordWeights);
+        const sortedPostIds = getTopPostIds(postScores, 5);
 
         if (sortedPostIds.length > 0) {
           const { data: recPosts } = await supabase
@@ -176,7 +125,7 @@ export default async function Home() {
               created_at,
               updated_at,
               author_id,
-              profiles!posts_author_id_fkey (
+              profiles:author_id (
                 username,
                 avatar_url
               )
@@ -184,10 +133,17 @@ export default async function Home() {
             .in("id", sortedPostIds)
             .eq("is_deleted", false);
 
-          const typedRecPosts = (recPosts as Post[] | null) || [];
-          recommendedPosts = sortedPostIds
-            .map((id) => typedRecPosts.find((p) => p.id === id))
-            .filter((p): p is Post => p !== undefined);
+          const postIdIndexMap = new Map(sortedPostIds.map((id, index) => [id, index]));
+          const typedRecPosts = (recPosts as any[] | null) || [];
+          
+          recommendedPosts = new Array(typedRecPosts.length);
+          for (const post of typedRecPosts) {
+            const index = postIdIndexMap.get(post.id);
+            if (index !== undefined) {
+              recommendedPosts[index] = post;
+            }
+          }
+          recommendedPosts = recommendedPosts.filter(Boolean);
         }
       }
     }
@@ -201,11 +157,11 @@ export default async function Home() {
         avatarUrl={profile?.avatar_url}
       />
       <HomePage 
-        initialPosts={transformPosts(posts as Post[] | null)}
-        initialAnnouncements={announcements || []}
-        initialWeeklyTopic={weeklyTopic || null}
-        initialHotPosts={transformPosts(hotPosts as Post[] | null)}
-        initialRecommendedPosts={transformPosts(recommendedPosts)}
+        initialPosts={transformPostsWithAuthor(posts as any[] | null)}
+        initialAnnouncements={(announcements as any[]) || []}
+        initialWeeklyTopic={weeklyTopic}
+        initialHotPosts={transformPostsWithAuthor(hotPosts as any[] | null)}
+        initialRecommendedPosts={transformPostsWithAuthor(recommendedPosts as any[] | null)}
         initialUserKeywords={userKeywords}
         isLoggedIn={!!user}
         currentUserId={user?.id}

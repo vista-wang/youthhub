@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import type { PostWithAuthor } from "@/types/database";
 
 type TabType = "latest" | "hot" | "recommend";
@@ -39,9 +39,12 @@ export function useHomePage({
   const [hotPosts, setHotPosts] = useState<PostWithAuthor[]>(initialHotPosts);
   const [recommendedPosts, setRecommendedPosts] = useState<PostWithAuthor[]>(initialRecommendedPosts);
   const [userKeywords, setUserKeywords] = useState<string[]>(initialUserKeywords);
-  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
+  const [likedPosts, setLikedPosts] = useState<Set<string>>(() => new Set());
   const [activeTab, setActiveTab] = useState<TabType>("latest");
   const [isLoading, setIsLoading] = useState(false);
+
+  const likedPostsRef = useRef(likedPosts);
+  likedPostsRef.current = likedPosts;
 
   const handleRefresh = useCallback(async () => {
     setIsLoading(true);
@@ -86,7 +89,8 @@ export function useHomePage({
   }, []);
 
   const handleLike = useCallback(async (postId: string) => {
-    const isCurrentlyLiked = likedPosts.has(postId);
+    const currentLikedPosts = likedPostsRef.current;
+    const isCurrentlyLiked = currentLikedPosts.has(postId);
     
     setLikedPosts((prev) => {
       const newSet = new Set(prev);
@@ -125,7 +129,7 @@ export function useHomePage({
         return newSet;
       });
     }
-  }, [likedPosts]);
+  }, []);
 
   const handleAddKeyword = useCallback(async (keyword: string) => {
     try {

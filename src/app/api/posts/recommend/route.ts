@@ -1,34 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { transformPostsWithAuthor, calculatePostScores, getTopPostIds } from "@/lib/utils";
 
-type UserKeyword = { keyword: string; weight: number };
-type PostKeyword = { post_id: string; keyword: string; relevance: number };
-type Post = {
-  id: string;
-  title: string;
-  content: string;
-  likes_count: number;
-  comments_count: number;
-  created_at: string;
-  updated_at: string;
-  author_id: string;
-  profiles?: { username: string; avatar_url: string | null } | null;
-};
-
-function transformPosts(posts: Post[]) {
-  return posts.map((post) => ({
-    id: post.id,
-    title: post.title,
-    content: post.content,
-    likes_count: post.likes_count,
-    comments_count: post.comments_count,
-    created_at: post.created_at,
-    updated_at: post.updated_at,
-    author_id: post.author_id,
-    author_name: post.profiles?.username || "匿名用户",
-    author_avatar: post.profiles?.avatar_url || null,
-  }));
-}
+export const revalidate = 60;
 
 export async function GET() {
   try {
@@ -49,37 +23,25 @@ export async function GET() {
       .order("weight", { ascending: false })
       .limit(10);
 
-    const typedUserKeywords = (userKeywords as UserKeyword[] | null) || [];
-
-    if (typedUserKeywords.length === 0) {
+    if (!userKeywords || userKeywords.length === 0) {
       return NextResponse.json({ posts: [], reason: "no_keywords" });
     }
 
-    const keywords = typedUserKeywords.map((k) => k.keyword);
+    const typedUserKeywords = userKeywords as Array<{ keyword: string; weight: number }>;
+    const userKeywordWeights = new Map(typedUserKeywords.map((k) => [k.keyword, k.weight]));
+    const keywords = Array.from(userKeywordWeights.keys());
 
     const { data: postKeywords } = await supabase
       .from("post_keywords")
       .select("post_id, keyword, relevance")
       .in("keyword", keywords);
 
-    const typedPostKeywords = (postKeywords as PostKeyword[] | null) || [];
-
-    if (typedPostKeywords.length === 0) {
+    if (!postKeywords || postKeywords.length === 0) {
       return NextResponse.json({ posts: [], reason: "no_matching_posts" });
     }
 
-    const postScores: Record<string, number> = {};
-    typedPostKeywords.forEach((pk) => {
-      const userKeyword = typedUserKeywords.find((k) => k.keyword === pk.keyword);
-      if (userKeyword) {
-        postScores[pk.post_id] = (postScores[pk.post_id] || 0) + userKeyword.weight * pk.relevance;
-      }
-    });
-
-    const sortedPostIds = Object.entries(postScores)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10)
-      .map(([id]) => id);
+    const postScores = calculatePostScores(postKeywords, userKeywordWeights);
+    const sortedPostIds = getTopPostIds(postScores, 10);
 
     if (sortedPostIds.length === 0) {
       return NextResponse.json({ posts: [], reason: "no_matching_posts" });
@@ -111,17 +73,27 @@ export async function GET() {
       );
     }
 
-    const typedPosts = (posts as Post[] | null) || [];
-
-    const sortedPosts: Post[] = sortedPostIds
-      .map((id) => typedPosts.find((p) => p.id === id))
-      .filter((p): p is Post => p !== undefined);
+    const postIdIndexMap = new Map(sortedPostIds.map((id, index) => [id, index]));
+    const typedPosts = (posts as any[] | null) || [];
+    
+    const sortedPosts = new Array(typedPosts.length);
+    for (const post of typedPosts) {
+      const index = postIdIndexMap.get(post.id);
+      if (index !== undefined) {
+        sortedPosts[index] = post;
+      }
+    }
 
     return NextResponse.json({ 
-      posts: transformPosts(sortedPosts),
+      posts: transformPostsWithAuthor(sortedPosts.filter(Boolean)),
       keywords: keywords.slice(0, 5)
+    }, {
+      headers: {
+        "Cache-Control": "private, s-maxage=60, stale-while-revalidate=120"
+      }
     });
   } catch (error) {
+    console.error("Recommend posts error:", error);
     return NextResponse.json(
       { error: "服务器错误" },
       { status: 500 }
