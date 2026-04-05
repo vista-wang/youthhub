@@ -78,12 +78,14 @@ export function AnnouncementModal({ isOpen, onClose }: AnnouncementModalProps) {
 
   const handlePrev = () => {
     const newIndex = currentIndex > 0 ? currentIndex - 1 : ANNOUNCEMENTS.length - 1;
-    setCurrentId(ANNOUNCEMENTS[newIndex].id);
+    const announcement = ANNOUNCEMENTS[newIndex];
+    if (announcement) setCurrentId(announcement.id);
   };
 
   const handleNext = () => {
     const newIndex = currentIndex < ANNOUNCEMENTS.length - 1 ? currentIndex + 1 : 0;
-    setCurrentId(ANNOUNCEMENTS[newIndex].id);
+    const announcement = ANNOUNCEMENTS[newIndex];
+    if (announcement) setCurrentId(announcement.id);
   };
 
   return (
