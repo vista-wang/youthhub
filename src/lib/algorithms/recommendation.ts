@@ -112,7 +112,8 @@ class RecommendationEngine {
     let score = 0;
 
     const optimalTitleRange = [5, 40];
-    if (titleLen >= optimalTitleRange[0] && titleLen <= optimalTitleRange[1]) {
+    const [minTitle, maxTitle] = optimalTitleRange;
+    if (titleLen >= (minTitle ?? 0) && titleLen <= (maxTitle ?? 40)) {
       score += 0.4;
     } else if (titleLen > 1 && titleLen < 80) {
       score += 0.2;

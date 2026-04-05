@@ -75,7 +75,7 @@ class DFASensitiveWordFilter {
         if (!node.children.has(char)) {
           node.children.set(char, this.createNode());
         }
-        node = node.children.get(char)!;
+        node = node.children.get(char) || this.root;
       }
 
       node.wordEnd = true;
@@ -103,18 +103,19 @@ class DFASensitiveWordFilter {
     }
 
     while (queue.length > 0) {
-      const current = queue.shift()!;
+      const current = queue.shift();
+      if (!current) continue;
 
       for (const [char, child] of current.children) {
         queue.push(child);
 
         let failNode = current.fail;
-        while (failNode !== root && !failNode.children.has(char)) {
-          failNode = failNode.fail!;
+        while (failNode && failNode !== root && !failNode.children.has(char)) {
+          failNode = failNode.fail;
         }
 
-        child.fail = failNode.children.get(char) || root;
-        child.output = [...child.output, ...child.fail!.output];
+        child.fail = failNode?.children.get(char) || root;
+        child.output = [...child.output, ...(child.fail?.output || [])];
       }
     }
   }
@@ -148,9 +149,10 @@ class DFASensitiveWordFilter {
 
     for (let i = 0; i < chars.length; i++) {
       const char = chars[i];
+      if (!char) continue;
 
       while (node !== this.root && !node.children.has(char)) {
-        node = node.fail!;
+        node = node.fail || this.root;
       }
 
       node = node.children.get(char) || this.root;
@@ -164,7 +166,7 @@ class DFASensitiveWordFilter {
           const wordLen = wordInfo.word.length;
           const startPos = i - wordLen + 1;
 
-          if (!replaceMap.has(startPos) || replaceMap.get(startPos)!.length < wordLen) {
+          if (!replaceMap.has(startPos) || (replaceMap.get(startPos)?.length ?? 0) < wordLen) {
             replaceMap.set(startPos, {
               replacement: wordInfo.replacement || "***",
               length: wordLen,
@@ -181,7 +183,7 @@ class DFASensitiveWordFilter {
 
             if (
               !maxSeverity ||
-              SEVERITY_ORDER[wordInfo.severity] > SEVERITY_ORDER[maxSeverity]
+              (SEVERITY_ORDER[wordInfo.severity] ?? 0) > (SEVERITY_ORDER[maxSeverity] ?? 0)
             ) {
               maxSeverity = wordInfo.severity;
             }
@@ -240,9 +242,10 @@ class DFASensitiveWordFilter {
 
     for (let i = 0; i < chars.length; i++) {
       const char = chars[i];
+      if (!char) continue;
 
       while (node !== this.root && !node.children.has(char)) {
-        node = node.fail!;
+        node = node.fail || this.root;
       }
 
       node = node.children.get(char) || this.root;
@@ -314,9 +317,11 @@ export async function getSensitiveWords(): Promise<SensitiveWord[]> {
       remoteWordsCache = data.words || DEFAULT_WORDS;
       cacheExpiry = now + CACHE_DURATION;
       
-      filterInstance.build(remoteWordsCache);
+      if (remoteWordsCache) {
+        filterInstance.build(remoteWordsCache);
+      }
       
-      return remoteWordsCache;
+      return remoteWordsCache || DEFAULT_WORDS;
     }
   } catch {
     console.warn("Failed to fetch remote sensitive words, using defaults");

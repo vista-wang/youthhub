@@ -1,7 +1,7 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import type { PostWithAuthor, CommentWithAuthor, SensitiveWord } from "@/types/database";
-import { checkContentWithDFA as dfaCheck, getFilterInstance } from "@/lib/algorithms";
+import type { PostWithAuthor, CommentWithAuthor } from "@/types/database";
+import { checkContentWithDFA as dfaCheck } from "@/lib/algorithms";
 import { rankPosts, getHotPosts, recommendForUser } from "@/lib/algorithms";
 
 export function cn(...inputs: ClassValue[]) {
@@ -113,14 +113,6 @@ export function truncateText(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;
   return text.slice(0, maxLength) + "...";
 }
-
-const DEFAULT_SENSITIVE_WORDS: ReadonlyArray<{ word: string; replacement: string }> = [
-  { word: "测试敏感词1", replacement: "***" },
-  { word: "测试敏感词2", replacement: "***" },
-  { word: "广告", replacement: "[广告]" },
-  { word: "加微信", replacement: "***" },
-  { word: "刷单", replacement: "***" },
-];
 
 export function checkSensitiveWords(text: string): {
   hasSensitiveWords: boolean;
