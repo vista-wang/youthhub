@@ -100,11 +100,14 @@ export function Navbar({ user, username, avatarUrl }: NavbarProps) {
           </Link>
 
           <div className="hidden items-center gap-2 md:flex">
-            <AnnouncementButton onClick={() => setShowAnnouncement(true)} />
             {NAV_ITEMS.map((item) => renderNavItem(item))}
           </div>
 
           <div className="hidden items-center gap-3 md:flex">
+            <AnnouncementButton 
+              onClick={() => setShowAnnouncement(true)} 
+            />
+            
             {user ? (
               <div className="flex items-center gap-3">
                 <Link href={AUTH_PATHS.PROFILE}>
