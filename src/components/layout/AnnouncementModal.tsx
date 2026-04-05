@@ -107,10 +107,18 @@ export function AnnouncementModal({ isOpen, onClose }: AnnouncementModalProps) {
         {currentAnnouncement && (
           <>
             <div className="px-4 pb-3">
-              <div className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${TYPE_CONFIG[currentAnnouncement.type].color}`}>
-                <TYPE_CONFIG[currentAnnouncement.type].icon className="h-3 w-3" />
-                {TYPE_CONFIG[currentAnnouncement.type].label}
-              </div>
+              {(() => {
+                const config = TYPE_CONFIG[currentAnnouncement.type];
+                const Icon = config.icon;
+                return (
+                  <>
+                    <div className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${config.color}`}>
+                      <Icon className="h-3 w-3" />
+                      {config.label}
+                    </div>
+                  </>
+                );
+              })()}
               <h4 className="mt-2 font-semibold text-base text-gray-900">
                 {currentAnnouncement.title}
               </h4>
