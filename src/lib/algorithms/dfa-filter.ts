@@ -97,7 +97,7 @@ class DFASensitiveWordFilter {
     const queue: TrieNode[] = [];
     root.fail = root;
 
-    for (const [char, child] of root.children) {
+    for (const [_char, child] of root.children) {
       child.fail = root;
       queue.push(child);
     }
