@@ -48,11 +48,11 @@ export function RecommendedPosts({
 
   if (!isLoggedIn) {
     return (
-      <Card className="overflow-hidden border-dopamine-purple/20 bg-gradient-to-br from-dopamine-purple/5 to-dopamine-pink/5">
+      <Card className="overflow-hidden border-brand-teal/20 bg-gradient-to-br from-brand-teal/5 to-brand-blue/5">
         <CardContent className="p-6 text-center">
-          <Sparkles className="h-8 w-8 text-dopamine-purple mx-auto mb-3" />
+          <Sparkles className="h-8 w-8 text-brand-teal mx-auto mb-3" />
           <h3 className="font-medium text-gray-900 mb-2">个性化推荐</h3>
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-sm text-slate-500 mb-4">
             登录后设置感兴趣的关键词，获取专属推荐
           </p>
         </CardContent>
@@ -61,11 +61,11 @@ export function RecommendedPosts({
   }
 
   return (
-    <Card className="overflow-hidden border-dopamine-purple/20 bg-gradient-to-br from-dopamine-purple/5 to-dopamine-pink/5">
+    <Card className="overflow-hidden border-brand-teal/20 bg-gradient-to-br from-brand-teal/5 to-brand-blue/5">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base">
-            <div className="p-1.5 rounded-lg bg-gradient-to-br from-dopamine-purple to-dopamine-pink">
+            <div className="p-1.5 rounded-lg bg-gradient-to-br from-brand-teal to-brand-blue">
               <Sparkles className="h-4 w-4 text-white" />
             </div>
             为你推荐
@@ -96,7 +96,7 @@ export function RecommendedPosts({
 
       <CardContent className="pt-0">
         {showSettings && (
-          <div className="mb-4 p-3 rounded-lg bg-white/50 border border-gray-100">
+          <div className="mb-4 p-3 rounded-lg bg-white/50 border border-slate-100">
             <div className="flex items-center gap-2 mb-2">
               <Input
                 value={newKeyword}
@@ -106,7 +106,7 @@ export function RecommendedPosts({
                 onKeyDown={(e) => e.key === "Enter" && handleAddKeyword()}
               />
               <Button
-                variant="dopamine"
+                variant="primary"
                 size="sm"
                 onClick={handleAddKeyword}
                 disabled={!newKeyword.trim() || isLoading}
@@ -127,7 +127,7 @@ export function RecommendedPosts({
                     {keyword}
                     <button
                       onClick={() => onRemoveKeyword?.(keyword)}
-                      className="p-0.5 rounded-full hover:bg-gray-300"
+                      className="p-0.5 rounded-full hover:bg-slate-300"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -150,8 +150,8 @@ export function RecommendedPosts({
 
         {posts.length === 0 ? (
           <div className="text-center py-6">
-            <Heart className="h-8 w-8 text-gray-300 mx-auto mb-2" />
-            <p className="text-sm text-gray-500">
+            <Heart className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+            <p className="text-sm text-slate-500">
               {keywords.length === 0
                 ? "添加感兴趣的关键词，获取个性化推荐"
                 : "暂无匹配的帖子，试试其他关键词"}

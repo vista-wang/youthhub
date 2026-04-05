@@ -28,7 +28,7 @@ export function PostCard({
   };
 
   return (
-    <Card className="group card-hover dopamine-shadow overflow-hidden">
+    <Card className="group card-hover brand-shadow overflow-hidden">
       <Link href={`/post/${post.id}`}>
         <CardContent className="p-4 md:p-5">
           <div className="flex items-start gap-3">
@@ -36,21 +36,21 @@ export function PostCard({
               src={post.author_avatar}
               alt={post.author_name}
               size="md"
-              className="shrink-0 ring-2 ring-dopamine-pink/20"
+              className="shrink-0 ring-2 ring-brand-blue/20"
             />
             
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-medium text-gray-900 hover:text-dopamine-pink transition-colors">
+                <span className="font-medium text-gray-900 hover:text-brand-blue transition-colors">
                   {post.author_name}
                 </span>
-                <div className="flex items-center gap-1 text-xs text-gray-400">
+                <div className="flex items-center gap-1 text-xs text-slate-400">
                   <Clock className="h-3 w-3" />
                   {formatRelativeTime(post.created_at)}
                 </div>
               </div>
               
-              <h3 className="mt-1.5 text-base font-semibold text-gray-900 line-clamp-2 group-hover:text-dopamine-pink transition-colors">
+              <h3 className="mt-1.5 text-base font-semibold text-gray-900 line-clamp-2 group-hover:text-brand-blue transition-colors">
                 {post.title}
               </h3>
               
@@ -65,15 +65,15 @@ export function PostCard({
         </CardContent>
       </Link>
       
-      <div className="flex items-center justify-between border-t border-gray-50 bg-gray-50/50 px-4 py-2.5 md:px-5">
+      <div className="flex items-center justify-between border-t border-slate-50 bg-slate-50/50 px-4 py-2.5 md:px-5">
         <div className="flex items-center gap-4">
           <button
             onClick={handleLike}
             className={cn(
               "flex items-center gap-1.5 text-sm transition-all duration-200",
               isLiked
-                ? "text-dopamine-pink"
-                : "text-gray-400 hover:text-dopamine-pink"
+                ? "text-red-500"
+                : "text-slate-400 hover:text-red-400"
             )}
           >
             <Heart
@@ -87,7 +87,7 @@ export function PostCard({
           
           <Link
             href={`/post/${post.id}`}
-            className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-dopamine-blue transition-colors"
+            className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-brand-blue transition-colors"
           >
             <MessageCircle className="h-4 w-4" />
             <span>{post.comments_count}</span>

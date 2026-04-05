@@ -102,21 +102,21 @@ export function PostDetailPage({
       <div className="mx-auto max-w-2xl px-4 py-6">
         <div className="mb-6 flex items-center gap-4">
           <Link href="/">
-            <Button variant="ghost" size="icon" className="text-gray-500">
+            <Button variant="ghost" size="icon" className="text-slate-500">
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
           <h1 className="text-lg font-medium text-gray-900">帖子详情</h1>
         </div>
 
-        <Card className="dopamine-shadow mb-6">
+        <Card className="brand-shadow mb-6">
           <CardContent className="p-5 md:p-6">
             <div className="flex items-start gap-3 mb-4">
               <Avatar
                 src={post.author_avatar}
                 alt={post.author_name}
                 size="lg"
-                className="shrink-0 ring-2 ring-dopamine-pink/20"
+                className="shrink-0 ring-2 ring-brand-blue/20"
               />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -127,11 +127,11 @@ export function PostDetailPage({
                     <Badge variant="default">楼主</Badge>
                   )}
                 </div>
-                <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
+                <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
                   <Clock className="h-3 w-3" />
                   <span>{formatRelativeTime(post.created_at)}</span>
                   {post.updated_at !== post.created_at && (
-                    <span className="text-gray-300">· 已编辑</span>
+                    <span className="text-slate-300">· 已编辑</span>
                   )}
                 </div>
               </div>
@@ -145,15 +145,15 @@ export function PostDetailPage({
               {post.content}
             </div>
 
-            <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between">
+            <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <button
                   onClick={handleLike}
                   className={cn(
                     "flex items-center gap-1.5 text-sm transition-all duration-200",
                     isLiked
-                      ? "text-dopamine-pink"
-                      : "text-gray-400 hover:text-dopamine-pink"
+                      ? "text-red-500"
+                      : "text-slate-400 hover:text-red-400"
                   )}
                 >
                   <Heart
@@ -165,7 +165,7 @@ export function PostDetailPage({
                   <span className="font-medium">{likesCount}</span>
                 </button>
 
-                <div className="flex items-center gap-1.5 text-sm text-gray-400">
+                <div className="flex items-center gap-1.5 text-sm text-slate-400">
                   <MessageCircle className="h-5 w-5" />
                   <span>{comments.length}</span>
                 </div>
@@ -173,7 +173,7 @@ export function PostDetailPage({
 
               <button
                 onClick={handleShare}
-                className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-dopamine-blue transition-colors"
+                className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-brand-blue transition-colors"
               >
                 <Share2 className="h-5 w-5" />
               </button>
@@ -183,13 +183,13 @@ export function PostDetailPage({
 
         <div className="mb-4">
           <h3 className="text-lg font-medium text-gray-900 flex items-center gap-2">
-            <MessageCircle className="h-5 w-5 text-dopamine-blue" />
+            <MessageCircle className="h-5 w-5 text-brand-blue" />
             评论 ({comments.length})
           </h3>
         </div>
 
         {isLoggedIn ? (
-          <Card className="mb-6 dopamine-shadow">
+          <Card className="mb-6 brand-shadow">
             <CardContent className="p-4">
               <CommentForm
                 onSubmit={handleCommentSubmit}
@@ -199,13 +199,13 @@ export function PostDetailPage({
             </CardContent>
           </Card>
         ) : (
-          <Card className="mb-6 border-dopamine-pink/20 bg-gradient-to-r from-dopamine-pink/5 to-dopamine-purple/5">
+          <Card className="mb-6 border-brand-blue/20 bg-gradient-to-r from-brand-blue/5 to-brand-teal/5">
             <CardContent className="p-4 text-center">
               <p className="text-sm text-gray-600 mb-3">
                 登录后参与讨论
               </p>
               <Button
-                variant="dopamine"
+                variant="primary"
                 size="sm"
                 onClick={() => setShowAuthModal(true)}
               >
@@ -216,19 +216,19 @@ export function PostDetailPage({
         )}
 
         {comments.length === 0 ? (
-          <Card className="border-dashed">
+          <Card className="border-dashed border-slate-200">
             <CardContent className="py-12 text-center">
-              <div className="rounded-full bg-gray-100 w-12 h-12 flex items-center justify-center mx-auto mb-3">
-                <MessageCircle className="h-6 w-6 text-gray-400" />
+              <div className="rounded-full bg-slate-100 w-12 h-12 flex items-center justify-center mx-auto mb-3">
+                <MessageCircle className="h-6 w-6 text-slate-400" />
               </div>
-              <p className="text-gray-500 text-sm">
+              <p className="text-slate-500 text-sm">
                 暂无评论，快来抢沙发吧！
               </p>
             </CardContent>
           </Card>
         ) : (
           <Card>
-            <CardContent className="divide-y divide-gray-100">
+            <CardContent className="divide-y divide-slate-100">
               {comments.map((comment) => (
                 <CommentItem
                   key={comment.id}

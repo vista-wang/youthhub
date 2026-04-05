@@ -2,15 +2,16 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?: "default" | "secondary" | "success" | "warning" | "outline";
+  variant?: "default" | "secondary" | "success" | "warning" | "outline" | "info";
 }
 
 const variantClasses = {
-  default: "bg-dopamine-pink/10 text-dopamine-pink border-dopamine-pink/20",
-  secondary: "bg-gray-100 text-gray-600 border-gray-200",
-  success: "bg-dopamine-green/10 text-dopamine-green border-dopamine-green/20",
-  warning: "bg-dopamine-orange/10 text-dopamine-orange border-dopamine-orange/20",
-  outline: "bg-transparent border-gray-300 text-gray-600",
+  default: "bg-brand-blue/10 text-brand-blue border-brand-blue/20",
+  secondary: "bg-slate-100 text-slate-600 border-slate-200",
+  success: "bg-brand-green/10 text-brand-green border-brand-green/20",
+  warning: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+  outline: "bg-transparent border-slate-300 text-slate-600",
+  info: "bg-brand-teal/10 text-brand-teal border-brand-teal/20",
 };
 
 const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(

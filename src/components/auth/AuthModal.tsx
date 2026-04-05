@@ -121,16 +121,16 @@ export function AuthModal({
       <Card className="relative w-full max-w-md animate-slide-up shadow-2xl">
         <button
           onClick={handleClose}
-          className="absolute right-4 top-4 rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+          className="absolute right-4 top-4 rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
         >
           <X className="h-5 w-5" />
         </button>
 
         <CardHeader className="text-center pb-2">
-          <CardTitle className="text-2xl font-bold gradient-text">
+          <CardTitle className="text-2xl font-bold brand-text">
             {mode === "login" ? "欢迎回来" : "加入友料"}
           </CardTitle>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-slate-500 mt-1">
             {mode === "login" 
               ? "登录你的账号，继续探索" 
               : "创建账号，开始你的社区之旅"
@@ -142,7 +142,7 @@ export function AuthModal({
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === "register" && (
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input
                   type="text"
                   placeholder="用户名（2-20个字符）"
@@ -157,7 +157,7 @@ export function AuthModal({
             )}
 
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <Input
                 type="email"
                 placeholder="邮箱地址"
@@ -169,7 +169,7 @@ export function AuthModal({
             </div>
 
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <Input
                 type={showPassword ? "text" : "password"}
                 placeholder="密码（至少6个字符）"
@@ -182,7 +182,7 @@ export function AuthModal({
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
               >
                 {showPassword ? (
                   <EyeOff className="h-4 w-4" />
@@ -200,7 +200,7 @@ export function AuthModal({
 
             <Button
               type="submit"
-              variant="dopamine"
+              variant="primary"
               className="w-full"
               disabled={isLoading}
             >
@@ -215,7 +215,7 @@ export function AuthModal({
             </Button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-gray-500">
+          <div className="mt-6 text-center text-sm text-slate-500">
             {mode === "login" ? (
               <>
                 还没有账号？
@@ -224,7 +224,7 @@ export function AuthModal({
                     setMode("register");
                     setError(null);
                   }}
-                  className="ml-1 font-medium text-dopamine-pink hover:underline"
+                  className="ml-1 font-medium text-brand-blue hover:underline"
                 >
                   立即注册
                 </button>
@@ -237,7 +237,7 @@ export function AuthModal({
                     setMode("login");
                     setError(null);
                   }}
-                  className="ml-1 font-medium text-dopamine-pink hover:underline"
+                  className="ml-1 font-medium text-brand-blue hover:underline"
                 >
                   立即登录
                 </button>

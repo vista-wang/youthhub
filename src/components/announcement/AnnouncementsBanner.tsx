@@ -28,9 +28,9 @@ const typeConfig = {
   },
   important: {
     icon: Megaphone,
-    bgColor: "bg-dopamine-pink/5",
-    borderColor: "border-dopamine-pink/20",
-    iconColor: "text-dopamine-pink",
+    bgColor: "bg-brand-blue/5",
+    borderColor: "border-brand-blue/20",
+    iconColor: "text-brand-blue",
     badgeVariant: "default" as const,
   },
   event: {
@@ -113,8 +113,8 @@ export function AnnouncementsBanner({ announcements }: AnnouncementsBannerProps)
                   className={cn(
                     "w-1.5 h-1.5 rounded-full transition-all",
                     index === currentIndex
-                      ? "bg-dopamine-pink w-3"
-                      : "bg-gray-300 hover:bg-gray-400"
+                      ? "bg-brand-blue w-3"
+                      : "bg-slate-300 hover:bg-slate-400"
                   )}
                 />
               ))}
@@ -123,9 +123,9 @@ export function AnnouncementsBanner({ announcements }: AnnouncementsBannerProps)
 
           <button
             onClick={() => setIsDismissed(true)}
-            className="shrink-0 p-1 rounded-full hover:bg-gray-200/50 transition-colors"
+            className="shrink-0 p-1 rounded-full hover:bg-slate-200/50 transition-colors"
           >
-            <X className="h-4 w-4 text-gray-400" />
+            <X className="h-4 w-4 text-slate-400" />
           </button>
         </div>
       </CardContent>
@@ -183,7 +183,7 @@ export function AnnouncementsList({ announcements }: AnnouncementsBannerProps) {
                 </div>
 
                 <ChevronRight className={cn(
-                  "h-4 w-4 text-gray-400 transition-transform shrink-0 mt-1",
+                  "h-4 w-4 text-slate-400 transition-transform shrink-0 mt-1",
                   isExpanded && "rotate-90"
                 )} />
               </div>

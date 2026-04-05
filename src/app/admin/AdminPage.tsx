@@ -339,7 +339,7 @@ export function AdminPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-dopamine-pink" />
+        <Loader2 className="h-8 w-8 animate-spin text-brand-blue" />
       </div>
     );
   }
@@ -360,12 +360,12 @@ export function AdminPage() {
       <div className="mx-auto max-w-4xl px-4 py-6">
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-lg bg-gradient-to-br from-dopamine-pink to-dopamine-purple">
+            <div className="p-2 rounded-lg bg-gradient-to-br from-brand-blue to-brand-teal">
               <Shield className="h-6 w-6 text-white" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900">管理员中心</h1>
           </div>
-          <p className="text-gray-500">管理社区内容、用户和公告</p>
+          <p className="text-slate-500">管理社区内容、用户和公告</p>
         </div>
 
         <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
@@ -376,8 +376,8 @@ export function AdminPage() {
               className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
                 activeTab === tab.key
-                  ? "bg-gradient-to-r from-dopamine-pink to-dopamine-purple text-white"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  ? "bg-gradient-to-r from-brand-blue to-brand-teal text-white shadow-md"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
               )}
             >
               <tab.icon className="h-4 w-4" />
@@ -391,7 +391,7 @@ export function AdminPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>帖子列表</CardTitle>
-                <label className="flex items-center gap-2 text-sm">
+                <label className="flex items-center gap-2 text-sm text-slate-600">
                   <input
                     type="checkbox"
                     checked={includeDeleted}
@@ -409,7 +409,7 @@ export function AdminPage() {
                     key={post.id}
                     className={cn(
                       "p-4 rounded-lg border",
-                      post.is_deleted ? "bg-red-50 border-red-200" : "bg-white border-gray-200"
+                      post.is_deleted ? "bg-red-50 border-red-200" : "bg-white border-slate-200"
                     )}
                   >
                     <div className="flex items-start justify-between">
@@ -421,8 +421,8 @@ export function AdminPage() {
                           )}
                         </div>
                         <h3 className="font-medium text-gray-900 mb-1">{post.title}</h3>
-                        <p className="text-sm text-gray-500 line-clamp-2">{post.content}</p>
-                        <div className="flex items-center gap-4 mt-2 text-xs text-gray-400">
+                        <p className="text-sm text-slate-500 line-clamp-2">{post.content}</p>
+                        <div className="flex items-center gap-4 mt-2 text-xs text-slate-400">
                           <span>❤️ {post.likes_count}</span>
                           <span>💬 {post.comments_count}</span>
                           <span>{formatRelativeTime(post.created_at)}</span>
@@ -465,7 +465,7 @@ export function AdminPage() {
                   <ChevronLeft className="h-4 w-4" />
                   上一页
                 </Button>
-                <span className="text-sm text-gray-500">第 {postPage} 页</span>
+                <span className="text-sm text-slate-500">第 {postPage} 页</span>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -485,7 +485,7 @@ export function AdminPage() {
               <div className="flex items-center justify-between">
                 <CardTitle>用户列表</CardTitle>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <Input
                     value={userSearch}
                     onChange={(e) => setUserSearch(e.target.value)}
@@ -502,7 +502,7 @@ export function AdminPage() {
                     key={user.id}
                     className={cn(
                       "p-4 rounded-lg border",
-                      user.is_banned ? "bg-red-50 border-red-200" : "bg-white border-gray-200"
+                      user.is_banned ? "bg-red-50 border-red-200" : "bg-white border-slate-200"
                     )}
                   >
                     <div className="flex items-start justify-between">
@@ -510,22 +510,22 @@ export function AdminPage() {
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-medium text-gray-900">{user.username}</span>
                           {user.role === "admin" && (
-                            <Badge className="text-xs bg-dopamine-purple">管理员</Badge>
+                            <Badge className="text-xs bg-brand-purple text-white">管理员</Badge>
                           )}
                           {user.role === "moderator" && (
-                            <Badge className="text-xs bg-dopamine-blue">版主</Badge>
+                            <Badge className="text-xs bg-brand-blue text-white">版主</Badge>
                           )}
                           {user.is_banned && (
                             <Badge variant="warning" className="text-xs">已封禁</Badge>
                           )}
                         </div>
                         {user.bio && (
-                          <p className="text-sm text-gray-500 mb-1">{user.bio}</p>
+                          <p className="text-sm text-slate-500 mb-1">{user.bio}</p>
                         )}
                         {user.is_banned && user.ban_reason && (
                           <p className="text-xs text-red-500">封禁原因: {user.ban_reason}</p>
                         )}
-                        <p className="text-xs text-gray-400 mt-1">
+                        <p className="text-xs text-slate-400 mt-1">
                           注册于 {formatRelativeTime(user.created_at)}
                         </p>
                       </div>
@@ -571,7 +571,7 @@ export function AdminPage() {
                   <ChevronLeft className="h-4 w-4" />
                   上一页
                 </Button>
-                <span className="text-sm text-gray-500">第 {userPage} 页</span>
+                <span className="text-sm text-slate-500">第 {userPage} 页</span>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -591,7 +591,7 @@ export function AdminPage() {
               <div className="flex items-center justify-between">
                 <CardTitle>公告管理</CardTitle>
                 <Button
-                  variant="dopamine"
+                  variant="primary"
                   size="sm"
                   onClick={() => {
                     setEditingAnnouncement(null);
@@ -608,7 +608,7 @@ export function AdminPage() {
                 {announcements.map((announcement) => (
                   <div
                     key={announcement.id}
-                    className="p-4 rounded-lg border bg-white border-gray-200"
+                    className="p-4 rounded-lg border bg-white border-slate-200"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -628,13 +628,13 @@ export function AdminPage() {
                           {!announcement.is_active && (
                             <Badge variant="outline" className="text-xs">已停用</Badge>
                           )}
-                          <span className="text-xs text-gray-400">
+                          <span className="text-xs text-slate-400">
                             优先级: {announcement.priority}
                           </span>
                         </div>
                         <h3 className="font-medium text-gray-900 mb-1">{announcement.title}</h3>
-                        <p className="text-sm text-gray-500 line-clamp-2">{announcement.content}</p>
-                        <p className="text-xs text-gray-400 mt-1">
+                        <p className="text-sm text-slate-500 line-clamp-2">{announcement.content}</p>
+                        <p className="text-xs text-slate-400 mt-1">
                           发布于 {formatRelativeTime(announcement.created_at)}
                         </p>
                       </div>
@@ -672,7 +672,7 @@ export function AdminPage() {
               <div className="flex items-center justify-between">
                 <CardTitle>每周话题管理</CardTitle>
                 <Button
-                  variant="dopamine"
+                  variant="primary"
                   size="sm"
                   onClick={() => {
                     setEditingTopic(null);
@@ -689,7 +689,7 @@ export function AdminPage() {
                 {topics.map((topic) => (
                   <div
                     key={topic.id}
-                    className="p-4 rounded-lg border bg-white border-gray-200"
+                    className="p-4 rounded-lg border bg-white border-slate-200"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -697,15 +697,15 @@ export function AdminPage() {
                           {!topic.is_active && (
                             <Badge variant="outline" className="text-xs">已停用</Badge>
                           )}
-                          <span className="text-xs text-gray-400">
+                          <span className="text-xs text-slate-400">
                             {topic.week_start} ~ {topic.week_end}
                           </span>
                         </div>
                         <h3 className="font-medium text-gray-900 mb-1">{topic.title}</h3>
                         {topic.description && (
-                          <p className="text-sm text-gray-500 line-clamp-2">{topic.description}</p>
+                          <p className="text-sm text-slate-500 line-clamp-2">{topic.description}</p>
                         )}
-                        <p className="text-xs text-gray-400 mt-1">
+                        <p className="text-xs text-slate-400 mt-1">
                           创建于 {formatRelativeTime(topic.created_at)}
                         </p>
                       </div>
@@ -786,7 +786,7 @@ function AnnouncementModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <Card className="relative w-full max-w-lg">
+      <Card className="relative w-full max-w-lg brand-shadow">
         <CardHeader>
           <CardTitle>{announcement ? "编辑公告" : "新建公告"}</CardTitle>
         </CardHeader>
@@ -816,7 +816,7 @@ function AnnouncementModal({
                 <select
                   value={type}
                   onChange={(e) => setType(e.target.value)}
-                  className="w-full h-10 px-3 rounded-lg border border-gray-200"
+                  className="w-full h-10 px-3 rounded-lg border border-slate-200 focus:border-brand-blue focus:outline-none focus:ring-2 focus:ring-brand-blue/20 transition-all"
                 >
                   <option value="info">普通</option>
                   <option value="warning">警告</option>
@@ -847,7 +847,7 @@ function AnnouncementModal({
               <Button type="button" variant="ghost" onClick={onClose}>
                 取消
               </Button>
-              <Button type="submit" variant="dopamine">
+              <Button type="submit" variant="primary">
                 保存
               </Button>
             </div>
@@ -881,7 +881,7 @@ function TopicModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <Card className="relative w-full max-w-lg">
+      <Card className="relative w-full max-w-lg brand-shadow">
         <CardHeader>
           <CardTitle>{topic ? "编辑话题" : "新建话题"}</CardTitle>
         </CardHeader>
@@ -937,7 +937,7 @@ function TopicModal({
               <Button type="button" variant="ghost" onClick={onClose}>
                 取消
               </Button>
-              <Button type="submit" variant="dopamine">
+              <Button type="submit" variant="primary">
                 保存
               </Button>
             </div>

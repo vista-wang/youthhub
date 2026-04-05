@@ -66,8 +66,8 @@ export function LikeButton({
         "flex items-center transition-all duration-200",
         config.gap,
         isLiked
-          ? "text-dopamine-pink"
-          : "text-gray-400 hover:text-dopamine-pink",
+          ? "text-red-500"
+          : "text-slate-400 hover:text-red-400",
         isLoading && "opacity-50 cursor-not-allowed",
         className
       )}

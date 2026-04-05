@@ -79,22 +79,22 @@ export function HotPostsMini({ posts }: { posts: PostWithAuthor[] }) {
         <a
           key={post.id}
           href={`/post/${post.id}`}
-          className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors group"
+          className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition-colors group"
         >
           <span className={cn(
             "w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0",
             index === 0 ? "bg-red-100 text-red-600" :
             index === 1 ? "bg-orange-100 text-orange-600" :
             index === 2 ? "bg-yellow-100 text-yellow-600" :
-            "bg-gray-100 text-gray-500"
+            "bg-slate-100 text-slate-500"
           )}>
             {index + 1}
           </span>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate group-hover:text-dopamine-pink transition-colors">
+            <p className="text-sm font-medium text-gray-900 truncate group-hover:text-brand-blue transition-colors">
               {post.title}
             </p>
-            <div className="flex items-center gap-2 text-xs text-gray-400">
+            <div className="flex items-center gap-2 text-xs text-slate-400">
               <span>❤️ {post.likes_count}</span>
               <span>💬 {post.comments_count}</span>
             </div>

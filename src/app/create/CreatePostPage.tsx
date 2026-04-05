@@ -95,7 +95,7 @@ export function CreatePostPage() {
       <div className="mx-auto max-w-2xl px-4 py-6">
         <div className="mb-6 flex items-center gap-4">
           <Link href="/">
-            <Button variant="ghost" size="icon" className="text-gray-500">
+            <Button variant="ghost" size="icon" className="text-slate-500">
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
@@ -103,13 +103,13 @@ export function CreatePostPage() {
             <h1 className="text-xl font-bold text-gray-900">
               发布新帖 ✍️
             </h1>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-slate-500">
               分享你的想法和故事
             </p>
           </div>
         </div>
 
-        <Card className="dopamine-shadow">
+        <Card className="brand-shadow">
           <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
@@ -132,7 +132,7 @@ export function CreatePostPage() {
                     <span
                       className={cn(
                         "text-xs",
-                        titleRemaining < 20 ? "text-red-400" : "text-gray-400"
+                        titleRemaining < 20 ? "text-red-400" : "text-slate-400"
                       )}
                     >
                       {titleRemaining}
@@ -159,13 +159,13 @@ export function CreatePostPage() {
                   </div>
                 </div>
                 <div className="mt-1.5 flex items-center justify-between">
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-slate-400">
                     支持 Markdown 格式
                   </span>
                   <span
                     className={cn(
                       "text-xs",
-                      contentRemaining < 100 ? "text-red-400" : "text-gray-400"
+                      contentRemaining < 100 ? "text-red-400" : "text-slate-400"
                     )}
                   >
                     {contentRemaining} 字符剩余
@@ -189,7 +189,7 @@ export function CreatePostPage() {
                 </div>
               )}
 
-              <div className="rounded-lg bg-gradient-to-r from-dopamine-pink/5 to-dopamine-purple/5 border border-dopamine-pink/20 px-4 py-3">
+              <div className="rounded-lg bg-gradient-to-r from-brand-blue/5 to-brand-teal/5 border border-brand-blue/20 px-4 py-3">
                 <p className="text-sm text-gray-600">
                   💡 <span className="font-medium">温馨提示：</span>
                   请友善发言，共同维护温暖社区。禁止发布违法违规、人身攻击等内容。
@@ -204,7 +204,7 @@ export function CreatePostPage() {
                 </Link>
                 <Button
                   type="submit"
-                  variant="dopamine"
+                  variant="primary"
                   disabled={isLoading || !title.trim() || !content.trim()}
                 >
                   {isLoading ? (

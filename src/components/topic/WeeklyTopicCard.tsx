@@ -23,11 +23,11 @@ export function WeeklyTopicCard({ topic, onParticipate }: WeeklyTopicCardProps) 
   })();
 
   return (
-    <Card className="overflow-hidden dopamine-shadow bg-gradient-to-br from-dopamine-purple/5 via-dopamine-pink/5 to-dopamine-blue/5 border-dopamine-purple/20">
+    <Card className="overflow-hidden brand-shadow bg-gradient-to-br from-brand-teal/5 via-brand-blue/5 to-brand-green/5 border-brand-teal/20">
       <CardContent className="p-0">
         <div className="relative">
           {topic.cover_image && (
-            <div className="h-24 w-full bg-gray-100 overflow-hidden">
+            <div className="h-24 w-full bg-slate-100 overflow-hidden">
               <img 
                 src={topic.cover_image} 
                 alt={topic.title}
@@ -38,11 +38,11 @@ export function WeeklyTopicCard({ topic, onParticipate }: WeeklyTopicCardProps) 
           
           <div className="p-4">
             <div className="flex items-center gap-2 mb-2">
-              <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-gradient-to-r from-dopamine-pink to-dopamine-purple text-white text-xs font-medium">
+              <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-gradient-to-r from-brand-blue to-brand-teal text-white text-xs font-medium">
                 <Sparkles className="h-3 w-3" />
                 本周话题
               </div>
-              <span className="text-xs text-gray-400">{weekLabel}</span>
+              <span className="text-xs text-slate-400">{weekLabel}</span>
             </div>
 
             <h3 className="text-lg font-bold text-gray-900 mb-2">
@@ -60,7 +60,7 @@ export function WeeklyTopicCard({ topic, onParticipate }: WeeklyTopicCardProps) 
 
             <div className="mt-4 flex items-center justify-between">
               <Button
-                variant="dopamine"
+                variant="primary"
                 size="sm"
                 onClick={onParticipate}
               >
@@ -71,7 +71,7 @@ export function WeeklyTopicCard({ topic, onParticipate }: WeeklyTopicCardProps) 
               {topic.description && topic.description.length > 80 && (
                 <button
                   onClick={() => setIsExpanded(!isExpanded)}
-                  className="text-xs text-dopamine-purple hover:underline flex items-center gap-0.5"
+                  className="text-xs text-brand-teal hover:underline flex items-center gap-0.5"
                 >
                   {isExpanded ? "收起" : "展开"}
                   <ChevronRight className={cn(
@@ -90,12 +90,12 @@ export function WeeklyTopicCard({ topic, onParticipate }: WeeklyTopicCardProps) 
 
 export function WeeklyTopicMini({ topic }: { topic: WeeklyTopic }) {
   return (
-    <div className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-dopamine-purple/5 to-dopamine-pink/5 border border-dopamine-purple/10">
-      <div className="shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-dopamine-pink to-dopamine-purple flex items-center justify-center">
+    <div className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-brand-teal/5 to-brand-blue/5 border border-brand-teal/10">
+      <div className="shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-brand-blue to-brand-teal flex items-center justify-center">
         <Sparkles className="h-4 w-4 text-white" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-xs text-gray-500 mb-0.5">本周话题</p>
+        <p className="text-xs text-slate-500 mb-0.5">本周话题</p>
         <p className="text-sm font-medium text-gray-900 truncate">{topic.title}</p>
       </div>
     </div>

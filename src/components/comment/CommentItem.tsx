@@ -29,11 +29,11 @@ export function CommentItem({ comment, postAuthorId }: CommentItemProps) {
             {comment.author_name}
           </span>
           {isPostAuthor && (
-            <span className="text-xs text-dopamine-pink bg-dopamine-pink/10 px-1.5 py-0.5 rounded">
+            <span className="text-xs text-brand-blue bg-brand-blue/10 px-1.5 py-0.5 rounded">
               楼主
             </span>
           )}
-          <div className="flex items-center gap-1 text-xs text-gray-400">
+          <div className="flex items-center gap-1 text-xs text-slate-400">
             <Clock className="h-3 w-3" />
             {formatRelativeTime(comment.created_at)}
           </div>

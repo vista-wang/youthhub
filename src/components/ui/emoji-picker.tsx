@@ -26,7 +26,7 @@ export function EmojiPicker({ onEmojiSelect, className }: EmojiPickerProps) {
         variant="ghost"
         size="icon"
         onClick={() => setIsOpen(!isOpen)}
-        className="text-gray-400 hover:text-dopamine-yellow hover:bg-dopamine-yellow/10"
+        className="text-slate-400 hover:text-amber-400 hover:bg-amber-400/10"
       >
         <Smile className="h-5 w-5" />
       </Button>
@@ -37,14 +37,14 @@ export function EmojiPicker({ onEmojiSelect, className }: EmojiPickerProps) {
             className="fixed inset-0 z-10" 
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute bottom-full left-0 mb-2 z-20 w-72 rounded-xl border border-gray-100 bg-white p-3 shadow-lg animate-slide-up">
+          <div className="absolute bottom-full left-0 mb-2 z-20 w-72 rounded-xl border border-slate-100 bg-white p-3 shadow-lg animate-slide-up">
             <div className="grid grid-cols-10 gap-1">
               {EMOJI_LIST.map((emoji) => (
                 <button
                   key={emoji}
                   type="button"
                   onClick={() => handleEmojiClick(emoji)}
-                  className="flex h-7 w-7 items-center justify-center rounded-lg text-lg hover:bg-gray-100 transition-colors"
+                  className="flex h-7 w-7 items-center justify-center rounded-lg text-lg hover:bg-slate-100 transition-colors"
                 >
                   {emoji}
                 </button>

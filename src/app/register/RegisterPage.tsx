@@ -87,11 +87,11 @@ export function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-gradient-to-br from-pink-50 via-white to-blue-50">
+    <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-gradient-to-br from-slate-50 via-white to-blue-50/50">
       <div className="w-full max-w-md">
         <Link 
           href="/"
-          className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-8 transition-colors"
+          className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 mb-8 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           返回首页
@@ -101,16 +101,16 @@ export function RegisterPage() {
           <CardHeader className="text-center pb-2">
             <div className="flex justify-center mb-4">
               <div className="relative">
-                <div className="absolute inset-0 animate-pulse-soft rounded-full bg-gradient-to-r from-dopamine-pink to-dopamine-purple opacity-50 blur-md" />
-                <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-dopamine-pink to-dopamine-purple">
+                <div className="absolute inset-0 animate-pulse-soft rounded-full bg-gradient-to-r from-brand-blue to-brand-teal opacity-40 blur-md" />
+                <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-brand-blue to-brand-teal">
                   <Sparkles className="h-8 w-8 text-white" />
                 </div>
               </div>
             </div>
-            <CardTitle className="text-2xl font-bold gradient-text">
+            <CardTitle className="text-2xl font-bold brand-text">
               加入友料
             </CardTitle>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-slate-500 mt-1">
               创建账号，开始你的社区之旅
             </p>
           </CardHeader>
@@ -118,7 +118,7 @@ export function RegisterPage() {
           <CardContent className="pt-4">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input
                   type="text"
                   placeholder="用户名（2-20个字符）"
@@ -132,7 +132,7 @@ export function RegisterPage() {
               </div>
 
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input
                   type="email"
                   placeholder="邮箱地址"
@@ -144,7 +144,7 @@ export function RegisterPage() {
               </div>
 
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input
                   type={showPassword ? "text" : "password"}
                   placeholder="密码（至少6个字符）"
@@ -157,7 +157,7 @@ export function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -168,7 +168,7 @@ export function RegisterPage() {
               </div>
 
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="确认密码（再次输入密码）"
@@ -181,7 +181,7 @@ export function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                 >
                   {showConfirmPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -213,7 +213,7 @@ export function RegisterPage() {
 
               <Button
                 type="submit"
-                variant="dopamine"
+                variant="primary"
                 className="w-full"
                 disabled={isLoading || !turnstile.verified || !password || !confirmPassword}
               >
@@ -228,15 +228,15 @@ export function RegisterPage() {
               </Button>
             </form>
 
-            <p className="mt-4 text-xs text-gray-400 text-center">
+            <p className="mt-4 text-xs text-slate-400 text-center">
               注册即表示同意我们的社区规范
             </p>
 
-            <div className="mt-4 text-center text-sm text-gray-500">
+            <div className="mt-4 text-center text-sm text-slate-500">
               已有账号？
               <Link
                 href="/login"
-                className="ml-1 font-medium text-dopamine-pink hover:underline"
+                className="ml-1 font-medium text-brand-blue hover:underline"
               >
                 立即登录
               </Link>

@@ -20,27 +20,27 @@ export interface Announcement {
 const TYPE_CONFIG = {
   info: {
     icon: Info,
-    color: "text-dopamine-blue bg-dopamine-blue/10 border-dopamine-blue/20",
+    color: "text-brand-blue bg-brand-blue/10 border-brand-blue/20",
     label: "通知",
-    bgColor: "bg-blue-50",
+    bgColor: "bg-blue-50/80",
   },
   important: {
     icon: Sparkles,
-    color: "text-dopamine-orange bg-dopamine-orange/10 border-dopamine-orange/20",
+    color: "text-amber-600 bg-amber-500/10 border-amber-500/20",
     label: "重要",
-    bgColor: "bg-orange-50",
+    bgColor: "bg-amber-50/80",
   },
   update: {
     icon: Megaphone,
-    color: "text-dopamine-green bg-dopamine-green/10 border-dopamine-green/20",
+    color: "text-brand-green bg-brand-green/10 border-brand-green/20",
     label: "更新",
-    bgColor: "bg-green-50",
+    bgColor: "bg-emerald-50/80",
   },
   event: {
     icon: Sparkles,
-    color: "text-dopamine-pink bg-dopamine-pink/10 border-dopamine-pink/20",
+    color: "text-brand-teal bg-brand-teal/10 border-brand-teal/20",
     label: "活动",
-    bgColor: "bg-pink-50",
+    bgColor: "bg-teal-50/80",
   },
 };
 
@@ -108,17 +108,17 @@ export function AnnouncementModal({ isOpen, onClose }: AnnouncementModalProps) {
       <Card className="relative w-full max-w-lg animate-slide-up shadow-2xl max-h-[85vh] flex flex-col">
         <div className="flex items-center justify-between p-4 pb-2">
           <div className="flex items-center gap-2">
-            <Megaphone className="h-5 w-5 text-dopamine-purple" />
+            <Megaphone className="h-5 w-5 text-brand-blue" />
             <h3 className="font-bold text-lg text-gray-900">系统公告</h3>
             {!isLoading && (
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-slate-400">
                 {currentIndex + 1}/{announcements.length}
               </span>
             )}
           </div>
           <button
             onClick={onClose}
-            className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+            className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
@@ -126,7 +126,7 @@ export function AnnouncementModal({ isOpen, onClose }: AnnouncementModalProps) {
 
         {isLoading ? (
           <CardContent className="flex items-center justify-center py-12">
-            <div className="animate-pulse-soft text-gray-400">加载中...</div>
+            <div className="animate-pulse-soft text-slate-400">加载中...</div>
           </CardContent>
         ) : currentAnnouncement ? (
           <>
@@ -146,7 +146,7 @@ export function AnnouncementModal({ isOpen, onClose }: AnnouncementModalProps) {
                 {currentAnnouncement.title}
               </h4>
               {currentAnnouncement.created_at && (
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs text-slate-400 mt-1">
                   {formatRelativeTime(currentAnnouncement.created_at)}
                 </p>
               )}
@@ -159,7 +159,7 @@ export function AnnouncementModal({ isOpen, onClose }: AnnouncementModalProps) {
             </CardContent>
 
             {hasMultiple && (
-              <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+              <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -177,8 +177,8 @@ export function AnnouncementModal({ isOpen, onClose }: AnnouncementModalProps) {
                       onClick={() => goToIndex(i)}
                       className={`w-2 h-2 rounded-full transition-colors ${
                         i === currentIndex
-                          ? "bg-dopamine-pink scale-125"
-                          : "bg-gray-200 hover:bg-gray-300"
+                          ? "bg-brand-blue scale-125"
+                          : "bg-slate-200 hover:bg-slate-300"
                       }`}
                     />
                   ))}
@@ -198,8 +198,8 @@ export function AnnouncementModal({ isOpen, onClose }: AnnouncementModalProps) {
           </>
         ) : (
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <Megaphone className="h-12 w-12 text-gray-200 mb-3" />
-            <p className="text-gray-500 text-sm">暂无公告</p>
+            <Megaphone className="h-12 w-12 text-slate-200 mb-3" />
+            <p className="text-slate-500 text-sm">暂无公告</p>
           </CardContent>
         )}
       </Card>
@@ -208,17 +208,15 @@ export function AnnouncementModal({ isOpen, onClose }: AnnouncementModalProps) {
 }
 
 interface AnnouncementButtonProps {
-  onClick: () => void;
   count?: number;
 }
 
-export function AnnouncementButton({ onClick, count }: AnnouncementButtonProps) {
+export function AnnouncementButton({ count }: AnnouncementButtonProps) {
   const showBadge = count !== undefined && count > 0;
 
   return (
-    <button
-      onClick={onClick}
-      className="relative flex items-center justify-center rounded-lg p-2 text-white bg-gradient-to-r from-dopamine-orange to-dopamine-pink shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 group"
+    <span
+      className="relative flex items-center justify-center rounded-lg p-2 text-white bg-gradient-to-r from-brand-blue to-brand-teal shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
       aria-label="查看系统公告"
     >
       <Megaphone className="h-4 w-4" />
@@ -233,6 +231,6 @@ export function AnnouncementButton({ onClick, count }: AnnouncementButtonProps) 
           <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-400" />
         </span>
       )}
-    </button>
+    </span>
   );
 }

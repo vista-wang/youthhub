@@ -46,14 +46,14 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               <h2 className="mb-2 text-lg font-semibold text-gray-900">
                 出错了
               </h2>
-              <p className="mb-4 text-sm text-gray-500">
+              <p className="mb-4 text-sm text-slate-500">
                 {this.state.error?.message || "发生了未知错误，请稍后重试"}
               </p>
               <div className="flex justify-center gap-2">
                 <Button variant="ghost" onClick={() => window.location.reload()}>
                   刷新页面
                 </Button>
-                <Button variant="dopamine" onClick={this.handleRetry}>
+                <Button variant="primary" onClick={this.handleRetry}>
                   重试
                 </Button>
               </div>

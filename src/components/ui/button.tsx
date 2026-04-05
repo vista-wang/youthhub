@@ -3,24 +3,26 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-95",
+  "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]",
   {
     variants: {
       variant: {
         default:
-          "bg-gradient-to-r from-dopamine-pink to-dopamine-purple text-white shadow-md hover:shadow-lg hover:brightness-110",
+          "bg-brand-blue text-white shadow-sm hover:bg-brand-blue-dark hover:shadow-md",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+          "bg-slate-100 text-slate-700 hover:bg-slate-200",
         outline:
-          "border-2 border-dopamine-pink text-dopamine-pink hover:bg-dopamine-pink/10",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
-        dopamine:
-          "bg-gradient-to-r from-dopamine-pink via-dopamine-purple to-dopamine-blue text-white shadow-lg hover:shadow-xl hover:brightness-110",
+          "border-2 border-brand-blue/30 text-brand-blue hover:bg-brand-blue/5",
+        ghost:
+          "hover:bg-slate-100 hover:text-slate-900",
+        link:
+          "text-brand-blue underline-offset-4 hover:underline",
+        primary:
+          "bg-gradient-to-r from-brand-blue to-brand-teal text-white shadow-md hover:shadow-lg",
         success:
-          "bg-gradient-to-r from-dopamine-green to-emerald-500 text-white shadow-md hover:shadow-lg",
+          "bg-brand-green text-white hover:bg-brand-green-dark shadow-sm hover:shadow-md",
         warning:
-          "bg-gradient-to-r from-dopamine-orange to-amber-500 text-white shadow-md hover:shadow-lg",
+          "bg-amber-500 text-white hover:bg-amber-600 shadow-sm hover:shadow-md",
       },
       size: {
         default: "h-10 px-4 py-2",

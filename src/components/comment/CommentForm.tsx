@@ -85,7 +85,7 @@ export function CommentForm({
               "text-xs",
               remainingChars < 50
                 ? "text-red-400"
-                : "text-gray-400"
+                : "text-slate-400"
             )}
           >
             {remainingChars}
@@ -94,7 +94,7 @@ export function CommentForm({
         
         <Button
           type="submit"
-          variant="dopamine"
+          variant="primary"
           size="sm"
           disabled={isLoading || !content.trim()}
         >
@@ -109,7 +109,7 @@ export function CommentForm({
         </Button>
       </div>
 
-      <p className="text-xs text-gray-400">
+      <p className="text-xs text-slate-400">
         💡 请友善发言，共同维护温暖社区
       </p>
     </form>

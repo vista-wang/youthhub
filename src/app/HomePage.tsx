@@ -96,13 +96,13 @@ export function HomePage({
     if (displayPosts.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="rounded-full bg-gray-100 p-6 mb-4">
-            <Inbox className="h-12 w-12 text-gray-400" />
+          <div className="rounded-full bg-slate-100 p-6 mb-4">
+            <Inbox className="h-12 w-12 text-slate-400" />
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">
             {activeTab === "recommend" ? "暂无推荐" : "暂无帖子"}
           </h3>
-          <p className="text-gray-500 mb-6">
+          <p className="text-slate-500 mb-6">
             {activeTab === "recommend" 
               ? "添加感兴趣的关键词，获取个性化推荐" 
               : "成为第一个发帖的人吧！"}
@@ -110,10 +110,10 @@ export function HomePage({
           {activeTab === "latest" && (
             isLoggedIn ? (
               <Link href="/create">
-                <Button variant="dopamine">发布第一篇帖子</Button>
+                <Button variant="primary">发布第一篇帖子</Button>
               </Link>
             ) : (
-              <Button variant="dopamine" onClick={() => openAuthModal("register")}>
+              <Button variant="primary" onClick={() => openAuthModal("register")}>
                 注册并发布
               </Button>
             )
@@ -169,7 +169,7 @@ export function HomePage({
         )}
 
         <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-1 p-1 bg-gray-100 rounded-lg">
+          <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg">
             {tabs.map((tab) => (
               <button
                 key={tab.key}
@@ -177,8 +177,8 @@ export function HomePage({
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
                   activeTab === tab.key
-                    ? "bg-white text-dopamine-pink shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
+                    ? "bg-white text-brand-blue shadow-sm"
+                    : "text-slate-500 hover:text-slate-700"
                 )}
               >
                 {tab.icon}
@@ -194,7 +194,7 @@ export function HomePage({
                 size="icon"
                 onClick={handleRefresh}
                 disabled={isLoading}
-                className="text-gray-500"
+                className="text-slate-500"
               >
                 <RefreshCw className={`h-5 w-5 ${isLoading ? "animate-spin" : ""}`} />
               </Button>
@@ -202,14 +202,14 @@ export function HomePage({
             
             {isLoggedIn ? (
               <Link href="/create">
-                <Button variant="dopamine" size="sm" className="whitespace-nowrap">
+                <Button variant="primary" size="sm" className="whitespace-nowrap">
                   <Plus className="mr-1.5 h-4 w-4" />
                   发帖
                 </Button>
               </Link>
             ) : (
               <Button
-                variant="dopamine"
+                variant="primary"
                 size="sm"
                 className="whitespace-nowrap"
                 onClick={() => openAuthModal("register")}
@@ -237,7 +237,7 @@ export function HomePage({
 
         {posts.length > 0 && posts.length >= 20 && activeTab === "latest" && (
           <div className="mt-8 text-center">
-            <p className="text-sm text-gray-400">已经到底啦 ~</p>
+            <p className="text-sm text-slate-400">已经到底啦 ~</p>
           </div>
         )}
       </div>
@@ -250,14 +250,14 @@ export function HomePage({
       />
 
       {!isLoggedIn && (
-        <div className="fixed bottom-0 left-0 right-0 border-t border-gray-100 bg-white/90 backdrop-blur-md p-4 md:hidden">
+        <div className="fixed bottom-0 left-0 right-0 border-t border-slate-100 bg-white/90 backdrop-blur-md p-4 md:hidden">
           <div className="flex items-center justify-between max-w-2xl mx-auto">
-            <p className="text-sm text-gray-600">加入友料，开始你的社区之旅</p>
+            <p className="text-sm text-slate-600">加入友料，开始你的社区之旅</p>
             <div className="flex gap-2">
               <Button variant="ghost" size="sm" onClick={() => openAuthModal("login")}>
                 登录
               </Button>
-              <Button variant="dopamine" size="sm" onClick={() => openAuthModal("register")}>
+              <Button variant="primary" size="sm" onClick={() => openAuthModal("register")}>
                 注册
               </Button>
             </div>
