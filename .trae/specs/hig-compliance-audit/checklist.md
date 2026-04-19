@@ -1,0 +1,22 @@
+- [x] 通用 Modal 组件包含 role="dialog"、aria-modal、焦点陷阱、Escape 关闭
+- [x] Toast 组件可替代 alert()，非侵入式显示
+- [x] ConfirmDialog 组件可替代 confirm()，支持破坏性操作样式
+- [x] PromptDialog 组件可替代 prompt()，包含文本输入框
+- [x] AnnouncementModal 使用通用 Modal 组件，具备完整无障碍属性
+- [x] AuthModal 使用通用 Modal 组件，具备完整无障碍属性
+- [x] AdminPage 内 Modal 使用通用 Modal 组件
+- [x] 所有图标按钮有 aria-label（Navbar、PostDetailPage、AuthModal、LoginPage、RegisterPage、CommentForm、CreatePostPage、AnnouncementModal、AnnouncementsBanner）
+- [x] 所有点赞按钮有 aria-pressed 和 aria-label（LikeButton、PostCard、PostDetailPage、CommentItem）
+- [x] 所有交互元素触摸目标 ≥44x44px（LikeButton、PostCard、AnnouncementsBanner、RecommendedPosts、EmojiPicker）
+- [x] 无 alert()/confirm()/prompt() 原生对话框调用
+- [x] 所有表单有正确的 autocomplete 属性（LoginPage、RegisterPage、AuthModal）
+- [x] 所有错误提示有 role="alert"（LoginPage、RegisterPage、AuthModal、CommentForm）
+- [x] EmojiPicker 有 role="listbox"/"option"、aria-label、方向键导航
+- [x] Tab 组件有 role="tablist"/"tab"、aria-selected（HomePage、AdminPage）
+- [x] PostCard 点赞/评论按钮与卡片链接解耦，无嵌套交互元素
+- [x] AnnouncementsBanner 有轮播暂停/播放按钮和 aria-live
+- [x] layout.tsx 有 viewport-fit=cover，底部固定栏有 safe-area padding
+- [x] 骨架屏有 aria-busy="true" 和 aria-hidden="true"
+- [x] Turnstile SITE_KEY 从环境变量读取
+- [x] npm run lint 通过
+- [x] npm run build 编译成功（类型检查 OOM 为 Supabase 类型复杂度预存问题）

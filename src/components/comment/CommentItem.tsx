@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { Clock } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { LikeButton } from "@/components/ui/like-button";
@@ -11,7 +12,7 @@ interface CommentItemProps {
   postAuthorId?: string;
 }
 
-export function CommentItem({ comment, postAuthorId }: CommentItemProps) {
+function CommentItemInner({ comment, postAuthorId }: CommentItemProps) {
   const isPostAuthor = postAuthorId === comment.author_id;
 
   return (
@@ -53,3 +54,5 @@ export function CommentItem({ comment, postAuthorId }: CommentItemProps) {
     </div>
   );
 }
+
+export const CommentItem = memo(CommentItemInner);

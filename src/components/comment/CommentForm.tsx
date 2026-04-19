@@ -78,9 +78,10 @@ export function CommentForm({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {error && (
-            <span className="text-xs text-red-500">{error}</span>
+            <span role="alert" className="text-xs text-red-500">{error}</span>
           )}
           <span
+            aria-live="polite"
             className={cn(
               "text-xs",
               remainingChars < 50

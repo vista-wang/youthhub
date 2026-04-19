@@ -75,6 +75,19 @@ export function HomePage({
     setAuthModalMode(mode);
   }, []);
 
+  const handlePostLike = useCallback((postId: string) => {
+    if (!isLoggedIn) {
+      setShowAuthModal(true);
+      setAuthModalMode("login");
+    } else {
+      handleLike(postId);
+    }
+  }, [isLoggedIn, handleLike]);
+
+  const handleTabClick = useCallback((tab: TabType) => {
+    setActiveTab(tab);
+  }, [setActiveTab]);
+
   const tabs = useMemo<Array<{ key: TabType; label: string; icon: React.ReactNode }>>(() => [
     { key: "latest", label: "最新", icon: <RefreshCw className="h-4 w-4" /> },
     { key: "hot", label: "热门", icon: <span className="text-sm">🔥</span> },
@@ -92,7 +105,7 @@ export function HomePage({
     }
   }, [activeTab, hotPosts, recommendedPosts, posts]);
 
-  const renderPosts = () => {
+  const renderPosts = useMemo(() => {
     if (displayPosts.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -129,19 +142,25 @@ export function HomePage({
             key={post.id}
             post={post}
             isLiked={likedPosts.has(post.id)}
-            onLike={() => {
-              if (!isLoggedIn) {
-                setShowAuthModal(true);
-                setAuthModalMode("login");
-              } else {
-                handleLike(post.id);
-              }
-            }}
+            onLike={handlePostLike}
           />
         ))}
       </div>
     );
-  };
+  }, [displayPosts, activeTab, isLoggedIn, likedPosts, handlePostLike, openAuthModal]);
+
+  const handleWeeklyTopicParticipate = useCallback(() => {
+    if (!isLoggedIn) {
+      setShowAuthModal(true);
+      setAuthModalMode("login");
+    } else {
+      window.location.href = "/create";
+    }
+  }, [isLoggedIn]);
+
+  const handleAuthModalClose = useCallback(() => {
+    setShowAuthModal(false);
+  }, []);
 
   return (
     <main className="min-h-screen pb-20">
@@ -156,24 +175,19 @@ export function HomePage({
           <div className="mb-4">
             <WeeklyTopicCard 
               topic={initialWeeklyTopic}
-              onParticipate={() => {
-                if (!isLoggedIn) {
-                  setShowAuthModal(true);
-                  setAuthModalMode("login");
-                } else {
-                  window.location.href = "/create";
-                }
-              }}
+              onParticipate={handleWeeklyTopicParticipate}
             />
           </div>
         )}
 
         <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg">
+          <div role="tablist" className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg">
             {tabs.map((tab) => (
               <button
                 key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
+                role="tab"
+                aria-selected={activeTab === tab.key}
+                onClick={() => handleTabClick(tab.key)}
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
                   activeTab === tab.key
@@ -233,7 +247,7 @@ export function HomePage({
           </div>
         )}
 
-        {renderPosts()}
+        {renderPosts}
 
         {posts.length > 0 && posts.length >= 20 && activeTab === "latest" && (
           <div className="mt-8 text-center">
@@ -244,13 +258,13 @@ export function HomePage({
 
       <AuthModal
         isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
+        onClose={handleAuthModalClose}
         defaultMode={authModalMode}
         onSuccess={handleAuthSuccess}
       />
 
       {!isLoggedIn && (
-        <div className="fixed bottom-0 left-0 right-0 border-t border-slate-100 bg-white/90 backdrop-blur-md p-4 md:hidden">
+        <div className="fixed bottom-0 left-0 right-0 border-t border-slate-100 bg-white/90 backdrop-blur-md px-4 pt-4 md:hidden" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
           <div className="flex items-center justify-between max-w-2xl mx-auto">
             <p className="text-sm text-slate-600">加入友料，开始你的社区之旅</p>
             <div className="flex gap-2">

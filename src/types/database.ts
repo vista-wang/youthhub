@@ -46,6 +46,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       posts: {
         Row: {
@@ -81,6 +82,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       comments: {
         Row: {
@@ -116,6 +118,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       likes: {
         Row: {
@@ -139,6 +142,7 @@ export interface Database {
           likeable_type?: 'post' | 'comment'
           created_at?: string
         }
+        Relationships: []
       }
       sensitive_words: {
         Row: {
@@ -171,6 +175,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       announcements: {
         Row: {
@@ -209,6 +214,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       weekly_topics: {
         Row: {
@@ -244,6 +250,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       user_keywords: {
         Row: {
@@ -296,6 +303,7 @@ export interface Database {
           relevance?: number
           created_at?: string
         }
+        Relationships: []
       }
       admin_logs: {
         Row: {
@@ -325,6 +333,7 @@ export interface Database {
           details?: Json | null
           created_at?: string
         }
+        Relationships: []
       }
     }
     Views: {
@@ -341,6 +350,7 @@ export interface Database {
           author_name: string
           author_avatar: string | null
         }
+        Relationships: []
       }
       comments_with_author: {
         Row: {
@@ -355,15 +365,44 @@ export interface Database {
           author_name: string
           author_avatar: string | null
         }
+        Relationships: []
       }
     }
-    Functions: {
-      [_ in never]: never
-    }
+    Functions: {}
     Enums: {
       [_ in never]: never
     }
   }
+}
+
+export interface SupabasePostResponse {
+  id: string;
+  title: string;
+  content: string;
+  likes_count: number;
+  comments_count: number;
+  created_at: string;
+  updated_at: string;
+  author_id: string;
+  profiles?: {
+    username: string;
+    avatar_url: string | null;
+  } | null;
+}
+
+export interface SupabaseCommentResponse {
+  id: string;
+  post_id: string;
+  parent_id: string | null;
+  content: string;
+  likes_count: number;
+  created_at: string;
+  updated_at: string;
+  author_id: string;
+  profiles?: {
+    username: string;
+    avatar_url: string | null;
+  } | null;
 }
 
 export type Profile = Database['public']['Tables']['profiles']['Row']

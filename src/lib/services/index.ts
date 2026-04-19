@@ -1,6 +1,51 @@
-import { createClient } from "@/lib/supabase/server";
-import type { PostWithAuthor, CommentWithAuthor, Announcement, WeeklyTopic, UserKeyword } from "@/types/database";
+import { createClient, fromTable } from "@/lib/supabase/server";
+import type { PostWithAuthor, CommentWithAuthor, Announcement, WeeklyTopic, UserKeyword, SupabasePostResponse, SupabaseCommentResponse } from "@/types/database";
 import { transformPostsWithAuthor, transformCommentsWithAuthor } from "@/lib/utils";
+import type { Database } from "@/types/database";
+import { getGlobalCache } from "@/lib/cache";
+import { calculatePostScores, getTopPostIds } from "@/lib/utils";
+
+type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
+type PostsQueryBuilder = any;
+type CommentsQueryBuilder = any;
+
+export const POSTS_SELECT = `
+  id,
+  title,
+  content,
+  likes_count,
+  comments_count,
+  created_at,
+  updated_at,
+  author_id,
+  profiles:author_id (
+    username,
+    avatar_url
+  )
+` as const;
+
+export const COMMENTS_SELECT = `
+  id,
+  post_id,
+  parent_id,
+  content,
+  likes_count,
+  created_at,
+  updated_at,
+  author_id,
+  profiles:author_id (
+    username,
+    avatar_url
+  )
+` as const;
+
+function buildPostsQuery(query: PostsQueryBuilder) {
+  return query.select(POSTS_SELECT);
+}
+
+function buildCommentsQuery(query: CommentsQueryBuilder) {
+  return query.select(COMMENTS_SELECT);
+}
 
 export interface PostsQueryOptions {
   limit?: number;
@@ -17,8 +62,9 @@ export interface PaginatedResponse<T> {
 }
 
 class PostService {
+  private cache = getGlobalCache();
+
   async getPosts(options: PostsQueryOptions = {}): Promise<PostWithAuthor[]> {
-    const supabase = await createClient();
     const {
       limit = 20,
       sortBy = "created_at",
@@ -26,69 +72,52 @@ class PostService {
       minLikes,
     } = options;
 
-    let query = supabase
-      .from("posts")
-      .select(`
-        id,
-        title,
-        content,
-        likes_count,
-        comments_count,
-        created_at,
-        updated_at,
-        author_id,
-        profiles:author_id (
-          username,
-          avatar_url
-        )
-      `)
+    const cacheKey = `posts:${limit}:${sortBy}:${sortOrder}:${minLikes ?? "none"}`;
+    return this.cache.getOrSet(cacheKey, async () => {
+      const supabase = await createClient();
+      let query = buildPostsQuery(
+        supabase
+          .from("posts")
+      )
       .eq("is_deleted", false)
       .order(sortBy, { ascending: sortOrder === "asc" })
       .limit(limit);
 
-    if (minLikes !== undefined) {
-      query = query.gte("likes_count", minLikes);
-    }
+      if (minLikes !== undefined) {
+        query = query.gte("likes_count", minLikes);
+      }
 
-    const { data, error } = await query;
+      const { data, error } = await query;
 
-    if (error) {
-      console.error("Error fetching posts:", error);
-      return [];
-    }
+      if (error) {
+        console.error("Error fetching posts:", error);
+        return [];
+      }
 
-    return transformPostsWithAuthor(data as any[] | null);
+      return transformPostsWithAuthor(data as SupabasePostResponse[] | null);
+    }, 30000);
   }
 
   async getPostById(id: string): Promise<PostWithAuthor | null> {
-    const supabase = await createClient();
+    const cacheKey = `post:${id}`;
+    return this.cache.getOrSet(cacheKey, async () => {
+      const supabase = await createClient();
 
-    const { data, error } = await supabase
-      .from("posts")
-      .select(`
-        id,
-        title,
-        content,
-        likes_count,
-        comments_count,
-        created_at,
-        updated_at,
-        author_id,
-        profiles:author_id (
-          username,
-          avatar_url
-        )
-      `)
+      const { data, error } = await buildPostsQuery(
+        supabase
+          .from("posts")
+      )
       .eq("id", id)
       .eq("is_deleted", false)
       .single();
 
-    if (error || !data) {
-      return null;
-    }
+      if (error || !data) {
+        return null;
+      }
 
-    const transformed = transformPostsWithAuthor([data as any]);
-    return transformed[0] || null;
+      const transformed = transformPostsWithAuthor([data as SupabasePostResponse]);
+      return transformed[0] || null;
+    }, 60000);
   }
 
   async getHotPosts(limit: number = 10): Promise<PostWithAuthor[]> {
@@ -104,111 +133,77 @@ class PostService {
     posts: PostWithAuthor[];
     keywords: string[];
   }> {
-    const supabase = await createClient();
+    const cacheKey = `recommended:${userId}:${limit}`;
+    return this.cache.getOrSet(cacheKey, async () => {
+      const supabase = await createClient();
 
-    const { data: userKeywords } = await supabase
-      .from("user_keywords")
-      .select("keyword, weight")
-      .eq("user_id", userId)
-      .order("weight", { ascending: false })
-      .limit(10);
+      const { data: userKeywords } = await supabase
+        .from("user_keywords")
+        .select("keyword, weight")
+        .eq("user_id", userId)
+        .order("weight", { ascending: false })
+        .limit(10);
 
-    if (!userKeywords || userKeywords.length === 0) {
-      return { posts: [], keywords: [] };
-    }
-
-    const typedUserKeywords = userKeywords as Array<{ keyword: string; weight: number }>;
-    const keywordWeights = new Map(typedUserKeywords.map((k) => [k.keyword, k.weight]));
-    const keywords = Array.from(keywordWeights.keys());
-
-    const { data: postKeywords } = await supabase
-      .from("post_keywords")
-      .select("post_id, keyword, relevance")
-      .in("keyword", keywords);
-
-    if (!postKeywords || postKeywords.length === 0) {
-      return { posts: [], keywords };
-    }
-
-    const typedPostKeywords = postKeywords as Array<{ post_id: string; keyword: string; relevance: number }>;
-    const postScores = new Map<string, number>();
-    for (const pk of typedPostKeywords) {
-      const weight = keywordWeights.get(pk.keyword);
-      if (weight) {
-        const currentScore = postScores.get(pk.post_id) || 0;
-        postScores.set(pk.post_id, currentScore + weight * pk.relevance);
+      if (!userKeywords || userKeywords.length === 0) {
+        return { posts: [], keywords: [] };
       }
-    }
 
-    const sortedPostIds = Array.from(postScores.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, limit)
-      .map(([id]) => id);
+      const typedUserKeywords = userKeywords as Array<{ keyword: string; weight: number }>;
+      const keywordWeights = new Map(typedUserKeywords.map((k) => [k.keyword, k.weight]));
+      const keywords = Array.from(keywordWeights.keys());
 
-    if (sortedPostIds.length === 0) {
-      return { posts: [], keywords: keywords.slice(0, 5) };
-    }
+      const { data: postKeywords } = await supabase
+        .from("post_keywords")
+        .select("post_id, keyword, relevance")
+        .in("keyword", keywords);
 
-    const { data: posts } = await supabase
-      .from("posts")
-      .select(`
-        id,
-        title,
-        content,
-        likes_count,
-        comments_count,
-        created_at,
-        updated_at,
-        author_id,
-        profiles:author_id (
-          username,
-          avatar_url
-        )
-      `)
+      if (!postKeywords || postKeywords.length === 0) {
+        return { posts: [], keywords };
+      }
+
+      const typedPostKeywords = postKeywords as Array<{ post_id: string; keyword: string; relevance: number }>;
+      const postScores = calculatePostScores(typedPostKeywords, keywordWeights);
+      const sortedPostIds = getTopPostIds(postScores, limit);
+
+      if (sortedPostIds.length === 0) {
+        return { posts: [], keywords: keywords.slice(0, 5) };
+      }
+
+      const { data: posts } = await buildPostsQuery(
+        supabase
+          .from("posts")
+      )
       .in("id", sortedPostIds)
       .eq("is_deleted", false);
 
-    const postIdIndexMap = new Map(sortedPostIds.map((id, index) => [id, index]));
-    const typedPosts = (posts as any[] | null) || [];
-    
-    const sortedPosts = new Array(typedPosts.length);
-    for (const post of typedPosts) {
-      const index = postIdIndexMap.get(post.id);
-      if (index !== undefined) {
-        sortedPosts[index] = post;
-      }
-    }
+      const postIdIndexMap = new Map(sortedPostIds.map((id, index) => [id, index]));
+      const typedPosts = (posts as SupabasePostResponse[] | null) || [];
 
-    return {
-      posts: transformPostsWithAuthor(sortedPosts.filter(Boolean)),
-      keywords: keywords.slice(0, 5),
-    };
+      const sortedPosts = new Array(typedPosts.length);
+      for (const post of typedPosts) {
+        const index = postIdIndexMap.get(post.id);
+        if (index !== undefined) {
+          sortedPosts[index] = post;
+        }
+      }
+
+      return {
+        posts: transformPostsWithAuthor(sortedPosts.filter(Boolean)),
+        keywords: keywords.slice(0, 5),
+      };
+    }, 30000);
   }
 
   async createPost(authorId: string, title: string, content: string): Promise<PostWithAuthor | null> {
-    const supabase = await createClient() as any;
+    const supabase = await createClient();
 
-    const { data, error } = await supabase
-      .from("posts")
+    const { data, error } = await fromTable(supabase, "posts")
       .insert({
         author_id: authorId,
         title: title.trim(),
         content: content.trim(),
       })
-      .select(`
-        id,
-        title,
-        content,
-        likes_count,
-        comments_count,
-        created_at,
-        updated_at,
-        author_id,
-        profiles:author_id (
-          username,
-          avatar_url
-        )
-      `)
+      .select(POSTS_SELECT)
       .single();
 
     if (error || !data) {
@@ -216,7 +211,7 @@ class PostService {
       return null;
     }
 
-    const transformed = transformPostsWithAuthor([data as any]);
+    const transformed = transformPostsWithAuthor([data as SupabasePostResponse]);
     return transformed[0] || null;
   }
 }
@@ -225,32 +220,20 @@ class CommentService {
   async getCommentsByPostId(postId: string): Promise<CommentWithAuthor[]> {
     const supabase = await createClient();
 
-    const { data, error } = await supabase
-      .from("comments")
-      .select(`
-        id,
-        post_id,
-        parent_id,
-        content,
-        likes_count,
-        created_at,
-        updated_at,
-        author_id,
-        profiles:author_id (
-          username,
-          avatar_url
-        )
-      `)
-      .eq("post_id", postId)
-      .eq("is_deleted", false)
-      .order("created_at", { ascending: true });
+    const { data, error } = await buildCommentsQuery(
+      supabase
+        .from("comments")
+    )
+    .eq("post_id", postId)
+    .eq("is_deleted", false)
+    .order("created_at", { ascending: true });
 
     if (error) {
       console.error("Error fetching comments:", error);
       return [];
     }
 
-    return transformCommentsWithAuthor(data as any[] | null);
+    return transformCommentsWithAuthor(data as SupabaseCommentResponse[] | null);
   }
 
   async createComment(
@@ -259,30 +242,16 @@ class CommentService {
     content: string,
     parentId?: string
   ): Promise<CommentWithAuthor | null> {
-    const supabase = await createClient() as any;
+    const supabase = await createClient();
 
-    const { data, error } = await supabase
-      .from("comments")
+    const { data, error } = await fromTable(supabase, "comments")
       .insert({
         post_id: postId,
         author_id: authorId,
         content: content.trim(),
         parent_id: parentId || null,
       })
-      .select(`
-        id,
-        post_id,
-        parent_id,
-        content,
-        likes_count,
-        created_at,
-        updated_at,
-        author_id,
-        profiles:author_id (
-          username,
-          avatar_url
-        )
-      `)
+      .select(COMMENTS_SELECT)
       .single();
 
     if (error || !data) {
@@ -290,7 +259,7 @@ class CommentService {
       return null;
     }
 
-    const transformed = transformCommentsWithAuthor([data as any]);
+    const transformed = transformCommentsWithAuthor([data as SupabaseCommentResponse]);
     return transformed[0] || null;
   }
 }
@@ -339,10 +308,9 @@ class UserService {
   }
 
   async addUserKeyword(userId: string, keyword: string): Promise<boolean> {
-    const supabase = await createClient() as any;
+    const supabase = await createClient();
 
-    const { error } = await supabase
-      .from("user_keywords")
+    const { error } = await fromTable(supabase, "user_keywords")
       .upsert(
         {
           user_id: userId,

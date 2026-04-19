@@ -1,43 +1,43 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-
-async function checkAdmin() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { authorized: false as const, error: "请先登录", status: 401 };
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  const role = (profile as { role: string } | null)?.role || "";
-  if (!profile || !["admin", "moderator"].includes(role)) {
-    return { authorized: false as const, error: "权限不足", status: 403 };
-  }
-
-  return { authorized: true as const, supabase: supabase as any, userId: user.id };
-}
+import { requireAdmin } from "@/lib/admin";
+import { fromTable } from "@/lib/supabase/server";
+import { validateId, validateNumber, validateString, validateObject } from "@/lib/validation";
+import { ValidationError, toErrorResponse } from "@/lib/errors";
 
 export async function GET(request: NextRequest) {
   try {
-    const auth = await checkAdmin();
+    const auth = await requireAdmin();
     if (!auth.authorized) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
     const { supabase } = auth;
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "20");
+    const pageStr = searchParams.get("page") || "1";
+    const limitStr = searchParams.get("limit") || "20";
     const includeDeleted = searchParams.get("include_deleted") === "true";
 
+    const pageValidation = validateNumber(parseInt(pageStr), { 
+      min: 1, 
+      integer: true, 
+      label: "页码" 
+    });
+    const limitValidation = validateNumber(parseInt(limitStr), { 
+      min: 1, 
+      max: 100, 
+      integer: true, 
+      label: "每页数量" 
+    });
+
+    if (!pageValidation.isValid || !limitValidation.isValid) {
+      const errors = [];
+      if (!pageValidation.isValid && pageValidation.error) errors.push(pageValidation.error);
+      if (!limitValidation.isValid && limitValidation.error) errors.push(limitValidation.error);
+      throw new ValidationError("参数验证失败", undefined, errors);
+    }
+
+    const page = parseInt(pageStr);
+    const limit = parseInt(limitStr);
     const offset = (page - 1) * limit;
 
     let query = supabase
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
     const { data: posts, error } = await query;
 
     if (error) {
-      return NextResponse.json({ error: "获取帖子失败" }, { status: 500 });
+      throw new Error("获取帖子失败");
     }
 
     const { count } = await supabase
@@ -74,45 +74,55 @@ export async function GET(request: NextRequest) {
       .select("*", { count: "exact", head: true });
 
     return NextResponse.json({
-      posts: posts?.map((post: any) => ({
+      posts: posts?.map((post: Record<string, unknown>) => ({
         ...post,
-        author_name: post.profiles?.username || "匿名用户",
-        author_avatar: post.profiles?.avatar_url || null,
+        author_name: (post["profiles"] as Record<string, unknown> | null)?.["username"] || "匿名用户",
+        author_avatar: (post["profiles"] as Record<string, unknown> | null)?.["avatar_url"] || null,
       })),
       total: count || 0,
       page,
       limit,
     });
   } catch (error) {
-    return NextResponse.json({ error: "服务器错误" }, { status: 500 });
+    const errRes = toErrorResponse(error);
+    const status = errRes.code === "VALIDATION_ERROR" ? 400 : 500;
+    return NextResponse.json(errRes, { status });
   }
 }
 
 export async function DELETE(request: NextRequest) {
   try {
-    const auth = await checkAdmin();
+    const auth = await requireAdmin();
     if (!auth.authorized) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
     const { supabase, userId } = auth;
 
     const body = await request.json();
-    const { postId, reason } = body;
+    const validation = validateObject(body, {
+      postId: (value) => validateId(value, "帖子ID"),
+      reason: (value) => validateString(value, { 
+        maxLength: 500, 
+        required: false, 
+        label: "删除原因" 
+      }),
+    });
 
-    if (!postId) {
-      return NextResponse.json({ error: "帖子ID不能为空" }, { status: 400 });
+    if (!validation.isValid) {
+      throw new ValidationError("输入验证失败", undefined, validation.errors);
     }
 
-    const { error: updateError } = await supabase
-      .from("posts")
+    const { postId, reason } = body;
+
+    const { error: updateError } = await fromTable(supabase, "posts")
       .update({ is_deleted: true })
       .eq("id", postId);
 
     if (updateError) {
-      return NextResponse.json({ error: "删除帖子失败" }, { status: 500 });
+      throw new Error("删除帖子失败");
     }
 
-    await supabase.from("admin_logs").insert({
+    await fromTable(supabase, "admin_logs").insert({
       admin_id: userId,
       action: "delete_post",
       target_type: "post",
@@ -122,35 +132,40 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    return NextResponse.json({ error: "服务器错误" }, { status: 500 });
+    const errRes = toErrorResponse(error);
+    const status = errRes.code === "VALIDATION_ERROR" ? 400 : 500;
+    return NextResponse.json(errRes, { status });
   }
 }
 
 export async function PATCH(request: NextRequest) {
   try {
-    const auth = await checkAdmin();
+    const auth = await requireAdmin();
     if (!auth.authorized) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
     const { supabase, userId } = auth;
 
     const body = await request.json();
-    const { postId } = body;
+    const validation = validateObject(body, {
+      postId: (value) => validateId(value, "帖子ID"),
+    });
 
-    if (!postId) {
-      return NextResponse.json({ error: "帖子ID不能为空" }, { status: 400 });
+    if (!validation.isValid) {
+      throw new ValidationError("输入验证失败", undefined, validation.errors);
     }
 
-    const { error: updateError } = await supabase
-      .from("posts")
+    const { postId } = body;
+
+    const { error: updateError } = await fromTable(supabase, "posts")
       .update({ is_deleted: false })
       .eq("id", postId);
 
     if (updateError) {
-      return NextResponse.json({ error: "恢复帖子失败" }, { status: 500 });
+      throw new Error("恢复帖子失败");
     }
 
-    await supabase.from("admin_logs").insert({
+    await fromTable(supabase, "admin_logs").insert({
       admin_id: userId,
       action: "restore_post",
       target_type: "post",
@@ -159,6 +174,8 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    return NextResponse.json({ error: "服务器错误" }, { status: 500 });
+    const errRes = toErrorResponse(error);
+    const status = errRes.code === "VALIDATION_ERROR" ? 400 : 500;
+    return NextResponse.json(errRes, { status });
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 
 interface UseLikeOptions {
   initialIsLiked?: boolean;
@@ -25,12 +25,14 @@ export function useLike({
   const [isLiked, setIsLiked] = useState(initialIsLiked);
   const [count, setCount] = useState(initialCount);
   const [isLoading, setIsLoading] = useState(false);
+  const isLikedRef = useRef(isLiked);
+  isLikedRef.current = isLiked;
 
   const toggle = useCallback(async () => {
     if (isLoading) return;
 
     setIsLoading(true);
-    const newIsLiked = !isLiked;
+    const newIsLiked = !isLikedRef.current;
 
     setIsLiked(newIsLiked);
     setCount((prev) => (newIsLiked ? prev + 1 : prev - 1));
@@ -48,7 +50,7 @@ export function useLike({
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, isLiked, onLike, onUnlike]);
+  }, [isLoading, onLike, onUnlike]);
 
   return { isLiked, count, isLoading, toggle };
 }
@@ -78,6 +80,8 @@ export function usePostLike({
   const [isLiked, setIsLiked] = useState(initialIsLiked);
   const [count, setCount] = useState(initialCount);
   const [isLoading, setIsLoading] = useState(false);
+  const isLikedRef = useRef(isLiked);
+  isLikedRef.current = isLiked;
 
   const handleLike = useCallback(async () => {
     if (!isLoggedIn) {
@@ -88,7 +92,7 @@ export function usePostLike({
     if (isLoading) return;
 
     setIsLoading(true);
-    const newIsLiked = !isLiked;
+    const newIsLiked = !isLikedRef.current;
 
     setIsLiked(newIsLiked);
     setCount((prev) => (newIsLiked ? prev + 1 : prev - 1));
@@ -107,7 +111,7 @@ export function usePostLike({
     } finally {
       setIsLoading(false);
     }
-  }, [isLoggedIn, isLoading, isLiked, postId, onAuthRequired]);
+  }, [isLoggedIn, isLoading, postId, onAuthRequired]);
 
   return { isLiked, count, isLoading, handleLike };
 }

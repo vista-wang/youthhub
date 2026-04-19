@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, fromTable } from "@/lib/supabase/server";
+import { validateString, validateNumber, validateObject } from "@/lib/validation";
+import { ValidationError, UnauthorizedError, toErrorResponse } from "@/lib/errors";
 
 export async function GET() {
   try {
@@ -10,10 +12,7 @@ export async function GET() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json(
-        { error: "请先登录" },
-        { status: 401 }
-      );
+      throw new UnauthorizedError("请先登录");
     }
 
     const { data: keywords, error } = await supabase
@@ -23,71 +22,78 @@ export async function GET() {
       .order("weight", { ascending: false });
 
     if (error) {
-      return NextResponse.json(
-        { error: "获取关键词失败" },
-        { status: 500 }
-      );
+      throw new Error("获取关键词失败");
     }
 
     return NextResponse.json({ keywords });
   } catch (error) {
-    return NextResponse.json(
-      { error: "服务器错误" },
-      { status: 500 }
-    );
+    const errRes = toErrorResponse(error);
+    const status = errRes.code === "UNAUTHORIZED" ? 401 : 500;
+    return NextResponse.json(errRes, { status });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient() as any;
+    const supabase = await createClient();
 
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json(
-        { error: "请先登录" },
-        { status: 401 }
-      );
+      throw new UnauthorizedError("请先登录");
     }
 
     const body = await request.json();
-    const { keyword, weight = 1.0, source = "manual" } = body;
 
-    if (!keyword || !keyword.trim()) {
-      return NextResponse.json(
-        { error: "关键词不能为空" },
-        { status: 400 }
-      );
+    const validation = validateObject(body, {
+      keyword: (value) => validateString(value, { 
+        minLength: 1, 
+        maxLength: 100, 
+        required: true, 
+        label: "关键词" 
+      }),
+      weight: (value) => validateNumber(value, { 
+        min: 0.1, 
+        max: 5.0, 
+        required: false, 
+        label: "权重" 
+      }),
+      source: (value) => validateString(value, { 
+        maxLength: 50, 
+        required: false, 
+        label: "来源" 
+      }),
+    });
+
+    if (!validation.isValid) {
+      throw new ValidationError("输入验证失败", undefined, validation.errors);
     }
 
-    const { data: existing } = await supabase
-      .from("user_keywords")
+    const { keyword, weight = 1.0, source = "manual" } = body;
+
+    const { data: existing } = await supabase.from("user_keywords")
       .select("id, weight")
       .eq("user_id", user.id)
       .eq("keyword", keyword.trim())
       .single();
 
-    if (existing) {
-      const { error } = await supabase
-        .from("user_keywords")
+    const existingRow = existing as { id: string; weight: number } | null;
+
+    if (existingRow) {
+      const { error } = await fromTable(supabase, "user_keywords")
         .update({ 
-          weight: Math.min(existing.weight + 0.5, 5.0),
+          weight: Math.min(existingRow.weight + 0.5, 5.0),
           updated_at: new Date().toISOString()
         })
-        .eq("id", existing.id);
+        .eq("id", existingRow.id);
 
       if (error) {
-        return NextResponse.json(
-          { error: "更新关键词失败" },
-          { status: 500 }
-        );
+        throw new Error("更新关键词失败");
       }
     } else {
-      const { error } = await supabase
-        .from("user_keywords")
+      const { error } = await fromTable(supabase, "user_keywords")
         .insert({
           user_id: user.id,
           keyword: keyword.trim(),
@@ -96,19 +102,16 @@ export async function POST(request: NextRequest) {
         });
 
       if (error) {
-        return NextResponse.json(
-          { error: "添加关键词失败" },
-          { status: 500 }
-        );
+        throw new Error("添加关键词失败");
       }
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    return NextResponse.json(
-      { error: "服务器错误" },
-      { status: 500 }
-    );
+    const errRes = toErrorResponse(error);
+    const status = errRes.code === "VALIDATION_ERROR" ? 400 : 
+                   errRes.code === "UNAUTHORIZED" ? 401 : 500;
+    return NextResponse.json(errRes, { status });
   }
 }
 
@@ -121,40 +124,38 @@ export async function DELETE(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json(
-        { error: "请先登录" },
-        { status: 401 }
-      );
+      throw new UnauthorizedError("请先登录");
     }
 
     const { searchParams } = new URL(request.url);
     const keyword = searchParams.get("keyword");
 
-    if (!keyword) {
-      return NextResponse.json(
-        { error: "关键词不能为空" },
-        { status: 400 }
-      );
+    const keywordValidation = validateString(keyword, { 
+      minLength: 1, 
+      maxLength: 100, 
+      required: true, 
+      label: "关键词" 
+    });
+
+    if (!keywordValidation.isValid) {
+      throw new ValidationError("输入验证失败", undefined, [keywordValidation.error || ""]);
     }
 
     const { error } = await supabase
       .from("user_keywords")
       .delete()
       .eq("user_id", user.id)
-      .eq("keyword", keyword);
+      .eq("keyword", keyword!);
 
     if (error) {
-      return NextResponse.json(
-        { error: "删除关键词失败" },
-        { status: 500 }
-      );
+      throw new Error("删除关键词失败");
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    return NextResponse.json(
-      { error: "服务器错误" },
-      { status: 500 }
-    );
+    const errRes = toErrorResponse(error);
+    const status = errRes.code === "VALIDATION_ERROR" ? 400 : 
+                   errRes.code === "UNAUTHORIZED" ? 401 : 500;
+    return NextResponse.json(errRes, { status });
   }
 }

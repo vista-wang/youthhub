@@ -75,3 +75,25 @@ export async function createClient() {
 export async function getServiceClient() {
   return createSupabaseClient({ useServiceRole: true });
 }
+
+type Tables = Database["public"]["Tables"];
+type TableName = keyof Tables;
+
+export function fromTable<T extends TableName>(
+  supabase: Awaited<ReturnType<typeof createSupabaseClient>>,
+  table: T
+) {
+  type Insert = Tables[T]["Insert"];
+  type Update = Tables[T]["Update"];
+
+  const query = supabase.from(table);
+
+  return {
+    select: query.select.bind(query),
+    insert: (values: Insert | Insert[]) => query.insert(values as never),
+    update: (values: Update) => query.update(values as never),
+    upsert: (values: Insert | Insert[], options?: { onConflict?: string }) =>
+      query.upsert(values as never, options as never),
+    delete: query.delete.bind(query),
+  };
+}

@@ -17,22 +17,22 @@ import { Button } from "@/components/ui";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn, formatRelativeTime } from "@/lib/utils";
-import type { Announcement } from "@/components/layout/AnnouncementModal";
+import type { Announcement } from "@/types/database";
 
-type CategoryType = "all" | "info" | "important" | "update" | "event";
+type CategoryType = "all" | "info" | "important" | "warning" | "event";
 
 const CATEGORIES: Array<{ key: CategoryType; label: string; icon: React.ElementType; color: string }> = [
   { key: "all", label: "全部公告", icon: Megaphone, color: "text-brand-blue" },
   { key: "info", label: "通知", icon: Info, color: "text-brand-blue" },
   { key: "important", label: "重要", icon: Sparkles, color: "text-amber-500" },
-  { key: "update", label: "更新", icon: Megaphone, color: "text-brand-green" },
+  { key: "warning", label: "更新", icon: Megaphone, color: "text-brand-green" },
   { key: "event", label: "活动", icon: Calendar, color: "text-brand-teal" },
 ];
 
 const TYPE_CONFIG = {
   info: { icon: Info, color: "text-brand-blue bg-brand-blue/10 border-brand-blue/20", label: "通知", dotColor: "bg-brand-blue" },
   important: { icon: Sparkles, color: "text-amber-600 bg-amber-500/10 border-amber-500/20", label: "重要", dotColor: "bg-amber-500" },
-  update: { icon: Megaphone, color: "text-brand-green bg-brand-green/10 border-brand-green/20", label: "更新", dotColor: "bg-brand-green" },
+  warning: { icon: Megaphone, color: "text-brand-green bg-brand-green/10 border-brand-green/20", label: "更新", dotColor: "bg-brand-green" },
   event: { icon: Calendar, color: "text-brand-teal bg-brand-teal/10 border-brand-teal/20", label: "活动", dotColor: "bg-brand-teal" },
 };
 
@@ -144,7 +144,7 @@ export function AnnouncementsPage() {
               {/* 公告列表 */}
               <div className="max-h-[calc(100vh-320px)] overflow-y-auto scrollbar-hide">
                 {isLoading ? (
-                  <div className="p-4 space-y-3">
+                  <div aria-busy="true" aria-hidden="true" className="p-4 space-y-3">
                     {[1, 2, 3, 4].map((i) => (
                       <div key={i} className="animate-pulse flex items-start gap-3 p-2 rounded-lg">
                         <div className="h-2.5 w-2.5 mt-1.5 rounded-full bg-slate-200 shrink-0" />
@@ -225,7 +225,7 @@ export function AnnouncementsPage() {
           {/* ========== 右侧正文区域 ========== */}
           <section className="flex-1 min-w-0">
             {isLoading ? (
-              <Card className="brand-shadow animate-pulse">
+              <Card aria-busy="true" aria-hidden="true" className="brand-shadow animate-pulse">
                 <CardContent className="p-8">
                   <div className="space-y-4">
                     <div className="h-8 w-48 rounded-lg bg-slate-200" />

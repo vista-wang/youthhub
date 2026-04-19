@@ -1,43 +1,43 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-
-async function checkAdmin() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { authorized: false as const, error: "请先登录", status: 401 };
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  const role = (profile as { role: string } | null)?.role || "";
-  if (!profile || !["admin", "moderator"].includes(role)) {
-    return { authorized: false as const, error: "权限不足", status: 403 };
-  }
-
-  return { authorized: true as const, supabase: supabase as any, userId: user.id };
-}
+import { requireAdmin } from "@/lib/admin";
+import { fromTable } from "@/lib/supabase/server";
+import { validateId, validateString, validateEnum, validateNumber, validateObject } from "@/lib/validation";
+import { ValidationError, toErrorResponse } from "@/lib/errors";
 
 export async function GET(request: NextRequest) {
   try {
-    const auth = await checkAdmin();
+    const auth = await requireAdmin();
     if (!auth.authorized) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
     const { supabase } = auth;
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "20");
+    const pageStr = searchParams.get("page") || "1";
+    const limitStr = searchParams.get("limit") || "20";
     const search = searchParams.get("search") || "";
 
+    const pageValidation = validateNumber(parseInt(pageStr), { 
+      min: 1, 
+      integer: true, 
+      label: "页码" 
+    });
+    const limitValidation = validateNumber(parseInt(limitStr), { 
+      min: 1, 
+      max: 100, 
+      integer: true, 
+      label: "每页数量" 
+    });
+
+    if (!pageValidation.isValid || !limitValidation.isValid) {
+      const errors = [];
+      if (!pageValidation.isValid && pageValidation.error) errors.push(pageValidation.error);
+      if (!limitValidation.isValid && limitValidation.error) errors.push(limitValidation.error);
+      throw new ValidationError("参数验证失败", undefined, errors);
+    }
+
+    const page = parseInt(pageStr);
+    const limit = parseInt(limitStr);
     const offset = (page - 1) * limit;
 
     let query = supabase
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
     const { data: users, error, count } = await query;
 
     if (error) {
-      return NextResponse.json({ error: "获取用户列表失败" }, { status: 500 });
+      throw new Error("获取用户列表失败");
     }
 
     return NextResponse.json({
@@ -63,24 +63,36 @@ export async function GET(request: NextRequest) {
       limit,
     });
   } catch (error) {
-    return NextResponse.json({ error: "服务器错误" }, { status: 500 });
+    const errRes = toErrorResponse(error);
+    const status = errRes.code === "VALIDATION_ERROR" ? 400 : 500;
+    return NextResponse.json(errRes, { status });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const auth = await checkAdmin();
+    const auth = await requireAdmin();
     if (!auth.authorized) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
     const { supabase, userId } = auth;
 
     const body = await request.json();
-    const { userId: targetUserId, action, reason } = body;
+    const validation = validateObject(body, {
+      userId: (value) => validateId(value, "目标用户ID"),
+      action: (value) => validateEnum(value, ["ban", "unban"], "操作类型"),
+      reason: (value) => validateString(value, { 
+        maxLength: 500, 
+        required: false, 
+        label: "封禁原因" 
+      }),
+    });
 
-    if (!targetUserId || !action) {
-      return NextResponse.json({ error: "参数不完整" }, { status: 400 });
+    if (!validation.isValid) {
+      throw new ValidationError("输入验证失败", undefined, validation.errors);
     }
+
+    const { userId: targetUserId, action, reason } = body;
 
     const { data: targetProfile } = await supabase
       .from("profiles")
@@ -90,12 +102,11 @@ export async function POST(request: NextRequest) {
 
     const targetRole = (targetProfile as { role: string } | null)?.role;
     if (targetRole === "admin") {
-      return NextResponse.json({ error: "无法封禁管理员" }, { status: 400 });
+      throw new ValidationError("无法封禁管理员");
     }
 
     if (action === "ban") {
-      const { error: updateError } = await supabase
-        .from("profiles")
+      const { error: updateError } = await fromTable(supabase, "profiles")
         .update({
           is_banned: true,
           ban_reason: reason || null,
@@ -104,10 +115,10 @@ export async function POST(request: NextRequest) {
         .eq("id", targetUserId);
 
       if (updateError) {
-        return NextResponse.json({ error: "封禁用户失败" }, { status: 500 });
+        throw new Error("封禁用户失败");
       }
 
-      await supabase.from("admin_logs").insert({
+      await fromTable(supabase, "admin_logs").insert({
         admin_id: userId,
         action: "ban_user",
         target_type: "user",
@@ -119,8 +130,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === "unban") {
-      const { error: updateError } = await supabase
-        .from("profiles")
+      const { error: updateError } = await fromTable(supabase, "profiles")
         .update({
           is_banned: false,
           ban_reason: null,
@@ -129,10 +139,10 @@ export async function POST(request: NextRequest) {
         .eq("id", targetUserId);
 
       if (updateError) {
-        return NextResponse.json({ error: "解封用户失败" }, { status: 500 });
+        throw new Error("解封用户失败");
       }
 
-      await supabase.from("admin_logs").insert({
+      await fromTable(supabase, "admin_logs").insert({
         admin_id: userId,
         action: "unban_user",
         target_type: "user",
@@ -142,8 +152,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, message: "用户已解封" });
     }
 
-    return NextResponse.json({ error: "未知操作" }, { status: 400 });
+    throw new ValidationError("未知操作");
   } catch (error) {
-    return NextResponse.json({ error: "服务器错误" }, { status: 500 });
+    const errRes = toErrorResponse(error);
+    const status = errRes.code === "VALIDATION_ERROR" ? 400 : 500;
+    return NextResponse.json(errRes, { status });
   }
 }

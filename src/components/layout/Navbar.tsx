@@ -123,6 +123,7 @@ export function Navbar({ user, username, avatarUrl }: NavbarProps) {
                   onClick={handleLogout}
                   disabled={isLoggingOut}
                   className="text-slate-500 hover:text-brand-blue hover:bg-brand-blue/10"
+                  aria-label="退出登录"
                 >
                   <LogOut className="h-4 w-4" />
                 </Button>
@@ -142,6 +143,8 @@ export function Navbar({ user, username, avatarUrl }: NavbarProps) {
           <button
             className="flex items-center justify-center rounded-lg p-2 text-slate-600 hover:bg-slate-100 md:hidden"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label="菜单"
+            aria-expanded={isMenuOpen}
           >
             {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>

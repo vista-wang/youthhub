@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, memo, useCallback } from "react";
 import { Flame, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui";
@@ -13,15 +13,15 @@ interface HotPostsSectionProps {
   onRefresh?: () => void;
 }
 
-export function HotPostsSection({ posts, onRefresh }: HotPostsSectionProps) {
+function HotPostsSectionInner({ posts, onRefresh }: HotPostsSectionProps) {
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async () => {
     if (!onRefresh) return;
     setIsLoading(true);
     await onRefresh();
     setIsLoading(false);
-  };
+  }, [onRefresh]);
 
   if (posts.length === 0) return null;
 
@@ -70,7 +70,9 @@ export function HotPostsSection({ posts, onRefresh }: HotPostsSectionProps) {
   );
 }
 
-export function HotPostsMini({ posts }: { posts: PostWithAuthor[] }) {
+export const HotPostsSection = memo(HotPostsSectionInner);
+
+function HotPostsMiniInner({ posts }: { posts: PostWithAuthor[] }) {
   if (posts.length === 0) return null;
 
   return (
@@ -104,3 +106,5 @@ export function HotPostsMini({ posts }: { posts: PostWithAuthor[] }) {
     </div>
   );
 }
+
+export const HotPostsMini = memo(HotPostsMiniInner);

@@ -8,8 +8,9 @@ import { Button } from "@/components/ui";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Turnstile, useTurnstile } from "@/components/ui/turnstile";
-import { createClient } from "@/lib/supabase/client";
+import { createClient, fromTable } from "@/lib/supabase/client";
 import { validateUsername } from "@/lib/utils";
+import { validateEmail, validateString } from "@/lib/validation";
 
 export function RegisterPage() {
   const router = useRouter();
@@ -32,6 +33,24 @@ export function RegisterPage() {
       return;
     }
 
+    // 验证邮箱
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.isValid) {
+      setError(emailValidation.error || "邮箱格式不正确");
+      return;
+    }
+
+    // 验证密码
+    const passwordValidation = validateString(password, {
+      minLength: 6,
+      required: true,
+      label: "密码",
+    });
+    if (!passwordValidation.isValid) {
+      setError(passwordValidation.error || "密码格式不正确");
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError("两次输入的密码不一致，请重新确认");
       return;
@@ -45,7 +64,7 @@ export function RegisterPage() {
 
     setIsLoading(true);
 
-    const supabase = createClient() as any;
+    const supabase = createClient();
 
     try {
       const { data, error: signUpError } = await supabase.auth.signUp({
@@ -65,8 +84,7 @@ export function RegisterPage() {
       }
 
       if (data.user) {
-        const { error: profileError } = await supabase
-          .from("profiles")
+        const { error: profileError } = await fromTable(supabase, "profiles")
           .insert({
             id: data.user.id,
             username,
@@ -125,6 +143,7 @@ export function RegisterPage() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="pl-10"
+                  autoComplete="username"
                   required
                   minLength={2}
                   maxLength={20}
@@ -139,7 +158,9 @@ export function RegisterPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10"
+                  autoComplete="email"
                   required
+                  maxLength={254}
                 />
               </div>
 
@@ -151,6 +172,7 @@ export function RegisterPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10 pr-10"
+                  autoComplete="new-password"
                   required
                   minLength={6}
                 />
@@ -158,6 +180,7 @@ export function RegisterPage() {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  aria-label="切换密码可见性"
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -175,6 +198,7 @@ export function RegisterPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className={`pl-10 pr-10 ${confirmPassword && password !== confirmPassword ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' : ''}`}
+                  autoComplete="new-password"
                   required
                   minLength={6}
                 />
@@ -182,6 +206,7 @@ export function RegisterPage() {
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  aria-label="切换密码可见性"
                 >
                   {showConfirmPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -206,7 +231,7 @@ export function RegisterPage() {
               )}
 
               {error && (
-                <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+                <div role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
                   {error}
                 </div>
               )}

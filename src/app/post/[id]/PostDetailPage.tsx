@@ -17,6 +17,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CommentForm } from "@/components/comment/CommentForm";
 import { CommentItem } from "@/components/comment/CommentItem";
 import { AuthModal } from "@/components/auth";
+import { useToast } from "@/components/ui/toast";
 import { formatRelativeTime, cn } from "@/lib/utils";
 import { usePostLike } from "@/lib/hooks";
 import type { PostWithAuthor, CommentWithAuthor } from "@/types/database";
@@ -37,6 +38,7 @@ export function PostDetailPage({
   isLiked: initialIsLiked,
 }: PostDetailPageProps) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [comments, setComments] = useState<CommentWithAuthor[]>(initialComments);
   const [showAuthModal, setShowAuthModal] = useState(false);
 
@@ -93,7 +95,7 @@ export function PostDetailPage({
       }
     } else {
       await navigator.clipboard.writeText(window.location.href);
-      alert("链接已复制到剪贴板");
+      showToast("链接已复制到剪贴板", "success");
     }
   };
 
@@ -102,7 +104,7 @@ export function PostDetailPage({
       <div className="mx-auto max-w-2xl px-4 py-6">
         <div className="mb-6 flex items-center gap-4">
           <Link href="/">
-            <Button variant="ghost" size="icon" className="text-slate-500">
+            <Button variant="ghost" size="icon" className="text-slate-500" aria-label="返回">
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
@@ -149,6 +151,8 @@ export function PostDetailPage({
               <div className="flex items-center gap-4">
                 <button
                   onClick={handleLike}
+                  aria-pressed={isLiked}
+                  aria-label={isLiked ? "取消点赞" : "点赞"}
                   className={cn(
                     "flex items-center gap-1.5 text-sm transition-all duration-200",
                     isLiked
@@ -174,6 +178,7 @@ export function PostDetailPage({
               <button
                 onClick={handleShare}
                 className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-brand-blue transition-colors"
+                aria-label="分享"
               >
                 <Share2 className="h-5 w-5" />
               </button>

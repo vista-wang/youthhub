@@ -1,5 +1,12 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import { ToastProvider } from "@/components/ui/toast";
 import "./globals.css";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
 
 export const metadata: Metadata = {
   title: "友料 YouthHub 公测版 - 初中生温暖社区",
@@ -22,9 +29,11 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body className="font-sans antialiased">
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/50">
-          {children}
-        </div>
+        <ToastProvider>
+          <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/50">
+            {children}
+          </div>
+        </ToastProvider>
       </body>
     </html>
   );

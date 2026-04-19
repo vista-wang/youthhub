@@ -21,7 +21,10 @@ export async function GET() {
       );
     }
 
-    return NextResponse.json({ topic: topic || null });
+    return NextResponse.json(
+      { topic: topic || null },
+      { headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" } }
+    );
   } catch (error) {
     return NextResponse.json(
       { error: "服务器错误" },

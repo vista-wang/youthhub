@@ -1,7 +1,7 @@
 import type { SensitiveWord } from "@/types/database";
 
 interface TrieNode {
-  children: Map<string, TrieNode>;
+  children: Record<string, TrieNode>;
   wordEnd: boolean;
   wordInfo: SensitiveWord | null;
   fail: TrieNode | null;
@@ -31,12 +31,21 @@ interface FilterResult {
   };
 }
 
-const SEVERITY_ORDER: Record<string, number> = {
-  low: 1,
-  medium: 2,
-  high: 3,
-  critical: 4,
-};
+interface Replacement {
+  start: number;
+  replacement: string;
+  length: number;
+}
+
+function getSeverityValue(severity: string): number {
+  switch (severity) {
+    case "low": return 1;
+    case "medium": return 2;
+    case "high": return 3;
+    case "critical": return 4;
+    default: return 0;
+  }
+}
 
 class DFASensitiveWordFilter {
   private root: TrieNode;
@@ -51,7 +60,7 @@ class DFASensitiveWordFilter {
 
   private createNode(): TrieNode {
     return {
-      children: new Map(),
+      children: {},
       wordEnd: false,
       wordInfo: null,
       fail: null,
@@ -69,13 +78,15 @@ class DFASensitiveWordFilter {
       if (!wordInfo.word || !wordInfo.is_active) continue;
 
       let node = root;
-      const chars = Array.from(wordInfo.word);
+      const word = wordInfo.word;
+      const len = word.length;
 
-      for (const char of chars) {
-        if (!node.children.has(char)) {
-          node.children.set(char, this.createNode());
+      for (let i = 0; i < len; i++) {
+        const char = word[i]!;
+        if (!node.children[char]) {
+          node.children[char] = this.createNode();
         }
-        node = node.children.get(char) || this.root;
+        node = node.children[char];
       }
 
       node.wordEnd = true;
@@ -93,29 +104,44 @@ class DFASensitiveWordFilter {
     this.cacheVersion++;
   }
 
+  /**
+   * 构建 Aho-Corasick 自动机的失败链接
+   * 
+   * 性能优化策略：
+   * - 使用索引 `front` 替代 `Array.shift()`，避免 O(n) 时间复杂度
+   * - 优化前：每次出队需要移动数组元素，总时间 O(n²)
+   * - 优化后：通过索引指针直接访问，总时间 O(n)
+   */
   private buildFailLinks(root: TrieNode): void {
     const queue: TrieNode[] = [];
+    let front = 0;
     root.fail = root;
 
-    for (const [_char, child] of root.children) {
-      child.fail = root;
-      queue.push(child);
+    for (const char in root.children) {
+      if (Object.prototype.hasOwnProperty.call(root.children, char)) {
+        const child = root.children[char]!;
+        child.fail = root;
+        queue.push(child);
+      }
     }
 
-    while (queue.length > 0) {
-      const current = queue.shift();
-      if (!current) continue;
+    while (front < queue.length) {
+      const current = queue[front]!;
+      front++;
 
-      for (const [char, child] of current.children) {
-        queue.push(child);
+      for (const char in current.children) {
+        if (Object.prototype.hasOwnProperty.call(current.children, char)) {
+          const child = current.children[char]!;
+          queue.push(child);
 
-        let failNode = current.fail;
-        while (failNode && failNode !== root && !failNode.children.has(char)) {
-          failNode = failNode.fail;
+          let failNode = current.fail;
+          while (failNode && failNode !== root && !failNode.children[char]) {
+            failNode = failNode.fail;
+          }
+
+          child.fail = failNode?.children[char] || root;
+          child.output = [...child.output, ...(child.fail?.output || [])];
         }
-
-        child.fail = failNode?.children.get(char) || root;
-        child.output = [...child.output, ...(child.fail?.output || [])];
       }
     }
   }
@@ -140,22 +166,23 @@ class DFASensitiveWordFilter {
     }
 
     const matches: MatchResult[] = [];
-    const replaceMap = new Map<number, { replacement: string; length: number }>();
+    const replacements: Replacement[] = [];
     let maxSeverity: "low" | "medium" | "high" | "critical" | null = null;
+    let maxSeverityValue = 0;
     let wordsChecked = 0;
 
     let node = this.root;
-    const chars = Array.from(text);
+    const len = text.length;
+    let i = 0;
 
-    for (let i = 0; i < chars.length; i++) {
-      const char = chars[i];
-      if (!char) continue;
-
-      while (node !== this.root && !node.children.has(char)) {
+    while (i < len) {
+      const char = text[i]!;
+      
+      while (node !== this.root && !node.children[char]) {
         node = node.fail || this.root;
       }
 
-      node = node.children.get(char) || this.root;
+      node = node.children[char] || this.root;
 
       if (node.output.length > 0) {
         wordsChecked++;
@@ -166,11 +193,33 @@ class DFASensitiveWordFilter {
           const wordLen = wordInfo.word.length;
           const startPos = i - wordLen + 1;
 
-          if (!replaceMap.has(startPos) || (replaceMap.get(startPos)?.length ?? 0) < wordLen) {
-            replaceMap.set(startPos, {
+          let shouldReplace = true;
+          let replaceIndex = -1;
+          
+          for (let j = 0; j < replacements.length; j++) {
+            const r = replacements[j]!;
+            if (r.start === startPos) {
+              if (r.length < wordLen) {
+                replaceIndex = j;
+              } else {
+                shouldReplace = false;
+              }
+              break;
+            }
+          }
+
+          if (shouldReplace) {
+            const replacementData: Replacement = {
+              start: startPos,
               replacement: wordInfo.replacement || "***",
               length: wordLen,
-            });
+            };
+
+            if (replaceIndex >= 0) {
+              replacements[replaceIndex] = replacementData;
+            } else {
+              replacements.push(replacementData);
+            }
 
             matches.push({
               word: wordInfo.word,
@@ -181,34 +230,32 @@ class DFASensitiveWordFilter {
               end: i + 1,
             });
 
-            if (
-              !maxSeverity ||
-              (SEVERITY_ORDER[wordInfo.severity] ?? 0) > (SEVERITY_ORDER[maxSeverity] ?? 0)
-            ) {
+            const severityValue = getSeverityValue(wordInfo.severity);
+            if (severityValue > maxSeverityValue) {
+              maxSeverityValue = severityValue;
               maxSeverity = wordInfo.severity;
             }
           }
         }
       }
+      i++;
     }
+
+    replacements.sort((a, b) => a.start - b.start);
 
     let filteredText = "";
     let lastIndex = 0;
 
-    const sortedReplacements = Array.from(replaceMap.entries()).sort(
-      ([a], [b]) => a - b
-    );
-
-    for (const [start, info] of sortedReplacements) {
-      if (start >= lastIndex) {
-        filteredText += text.slice(lastIndex, start) + info.replacement;
-        lastIndex = start + info.length;
+    for (const r of replacements) {
+      if (r.start >= lastIndex) {
+        filteredText += text.slice(lastIndex, r.start) + r.replacement;
+        lastIndex = r.start + r.length;
       }
     }
     filteredText += text.slice(lastIndex);
 
-    const hasCriticalWords = matches.some((m) => m.severity === "critical");
-    const hasHighSeverityWords = matches.some((m) => m.severity === "high");
+    const hasCriticalWords = maxSeverity === "critical";
+    const hasHighSeverityWords = maxSeverity === "high" || hasCriticalWords;
 
     let blockedReason: string | null = null;
     if (hasCriticalWords) {
@@ -238,30 +285,32 @@ class DFASensitiveWordFilter {
     }
 
     let node = this.root;
-    const chars = Array.from(text);
+    const len = text.length;
+    let i = 0;
 
-    for (let i = 0; i < chars.length; i++) {
-      const char = chars[i];
-      if (!char) continue;
-
-      while (node !== this.root && !node.children.has(char)) {
+    while (i < len) {
+      const char = text[i]!;
+      
+      while (node !== this.root && !node.children[char]) {
         node = node.fail || this.root;
       }
 
-      node = node.children.get(char) || this.root;
+      node = node.children[char] || this.root;
 
       if (node.output.length > 0) {
-        const highOrCritical = node.output.find(
-          (w) => w.severity === "high" || w.severity === "critical"
-        );
-        if (highOrCritical) {
-          return {
-            hasSensitiveWords: true,
-            severity: highOrCritical.severity as "high" | "critical",
-          };
+        for (const w of node.output) {
+          if (w.severity === "critical") {
+            return { hasSensitiveWords: true, severity: "critical" };
+          }
+        }
+        for (const w of node.output) {
+          if (w.severity === "high") {
+            return { hasSensitiveWords: true, severity: "high" };
+          }
         }
         return { hasSensitiveWords: true };
       }
+      i++;
     }
 
     return { hasSensitiveWords: false };
@@ -280,20 +329,34 @@ class DFASensitiveWordFilter {
       cacheVersion: this.cacheVersion,
     };
   }
+
+  benchmark(text: string, iterations: number = 100): {
+    avgTimeMs: number;
+    maxTimeMs: number;
+    minTimeMs: number;
+  } {
+    let total = 0;
+    let max = 0;
+    let min = Infinity;
+
+    for (let i = 0; i < iterations; i++) {
+      const start = performance.now();
+      this.filter(text);
+      const time = performance.now() - start;
+      total += time;
+      if (time > max) max = time;
+      if (time < min) min = time;
+    }
+
+    return {
+      avgTimeMs: total / iterations,
+      maxTimeMs: max,
+      minTimeMs: min,
+    };
+  }
 }
 
-const DEFAULT_WORDS: SensitiveWord[] = [
-  { id: "1", word: "测试敏感词1", category: "general", severity: "medium", replacement: "***", is_active: true, created_at: "", updated_at: "" },
-  { id: "2", word: "测试敏感词2", category: "general", severity: "medium", replacement: "***", is_active: true, created_at: "", updated_at: "" },
-  { id: "3", word: "广告", category: "spam", severity: "low", replacement: "[广告]", is_active: true, created_at: "", updated_at: "" },
-  { id: "4", word: "加微信", category: "spam", severity: "high", replacement: "***", is_active: true, created_at: "", updated_at: "" },
-  { id: "5", word: "刷单", category: "fraud", severity: "critical", replacement: "***", is_active: true, created_at: "", updated_at: "" },
-  { id: "6", word: "代做", category: "fraud", severity: "high", replacement: "***", is_active: true, created_at: "", updated_at: "" },
-  { id: "7", word: "兼职", category: "spam", severity: "low", replacement: "[推广]", is_active: true, created_at: "", updated_at: "" },
-  { id: "8", word: "QQ群", category: "spam", severity: "medium", replacement: "***", is_active: true, created_at: "", updated_at: "" },
-  { id: "9", word: "加QQ", category: "spam", severity: "high", replacement: "***", is_active: true, created_at: "", updated_at: "" },
-  { id: "10", word: "联系方式", category: "spam", severity: "medium", replacement: "***", is_active: true, created_at: "", updated_at: "" },
-];
+const DEFAULT_WORDS: SensitiveWord[] = [];
 
 const filterInstance = new DFASensitiveWordFilter();
 
@@ -314,20 +377,20 @@ export async function getSensitiveWords(): Promise<SensitiveWord[]> {
     const response = await fetch("/api/sensitive-words");
     if (response.ok) {
       const data = await response.json();
-      remoteWordsCache = data.words || DEFAULT_WORDS;
+      remoteWordsCache = data.words || [];
       cacheExpiry = now + CACHE_DURATION;
       
       if (remoteWordsCache) {
         filterInstance.build(remoteWordsCache);
       }
       
-      return remoteWordsCache || DEFAULT_WORDS;
+      return remoteWordsCache || [];
     }
   } catch {
-    console.warn("Failed to fetch remote sensitive words, using defaults");
+    console.warn("Failed to fetch remote sensitive words");
   }
 
-  return DEFAULT_WORDS;
+  return remoteWordsCache || [];
 }
 
 export function getFilterInstance(): DFASensitiveWordFilter {
@@ -356,4 +419,11 @@ export async function quickCheckContent(text: string): Promise<{
 }> {
   await getSensitiveWords();
   return filterInstance.quickCheck(text);
+}
+
+export function benchmarkFilter(text: string, words?: SensitiveWord[], iterations: number = 100) {
+  if (words) {
+    filterInstance.build(words);
+  }
+  return filterInstance.benchmark(text, iterations);
 }

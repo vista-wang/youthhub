@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -32,12 +32,14 @@ export function LikeButton({
   const [isLiked, setIsLiked] = useState(initialIsLiked);
   const [count, setCount] = useState(initialCount);
   const [isLoading, setIsLoading] = useState(false);
+  const isLikedRef = useRef(isLiked);
+  isLikedRef.current = isLiked;
 
   const handleClick = async () => {
     if (isLoading) return;
     
     setIsLoading(true);
-    const newIsLiked = !isLiked;
+    const newIsLiked = !isLikedRef.current;
     
     setIsLiked(newIsLiked);
     setCount((prev) => (newIsLiked ? prev + 1 : prev - 1));
@@ -62,8 +64,10 @@ export function LikeButton({
     <button
       onClick={handleClick}
       disabled={isLoading}
+      aria-pressed={isLiked}
+      aria-label={isLiked ? "取消点赞" : "点赞"}
       className={cn(
-        "flex items-center transition-all duration-200",
+        "flex items-center min-w-[44px] min-h-[44px] transition-all duration-200",
         config.gap,
         isLiked
           ? "text-red-500"

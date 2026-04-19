@@ -74,7 +74,16 @@ export function CreatePostPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setErrors([data.error || "发帖失败，请稍后重试"]);
+        // 处理新的错误响应格式
+        const errorMessages: string[] = [];
+        if (data.details && Array.isArray(data.details)) {
+          errorMessages.push(...data.details);
+        } else if (data.message) {
+          errorMessages.push(data.message);
+        } else {
+          errorMessages.push("发帖失败，请稍后重试");
+        }
+        setErrors(errorMessages);
         return;
       }
 
@@ -130,6 +139,7 @@ export function CreatePostPage() {
                       onEmojiSelect={handleTitleEmojiSelect} 
                     />
                     <span
+                      aria-live="polite"
                       className={cn(
                         "text-xs",
                         titleRemaining < 20 ? "text-red-400" : "text-slate-400"
@@ -163,6 +173,7 @@ export function CreatePostPage() {
                     支持 Markdown 格式
                   </span>
                   <span
+                    aria-live="polite"
                     className={cn(
                       "text-xs",
                       contentRemaining < 100 ? "text-red-400" : "text-slate-400"

@@ -1,117 +1,13 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import type { PostWithAuthor, CommentWithAuthor } from "@/types/database";
 import { checkContentWithDFA as dfaCheck } from "@/lib/algorithms";
-import { rankPosts, getHotPosts, recommendForUser } from "@/lib/algorithms";
+
+export { transformPostWithAuthor, transformCommentWithAuthor, transformPostsWithAuthor, transformCommentsWithAuthor } from "./transforms";
+export { validateUsername, validatePostContent, validateCommentContent } from "./validators";
+export { formatRelativeTime, truncateText } from "./formatters";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
-}
-
-interface SupabasePostResponse {
-  id: string;
-  title: string;
-  content: string;
-  likes_count: number;
-  comments_count: number;
-  created_at: string;
-  updated_at: string;
-  author_id: string;
-  profiles?: {
-    username: string;
-    avatar_url: string | null;
-  } | null;
-}
-
-interface SupabaseCommentResponse {
-  id: string;
-  post_id: string;
-  parent_id: string | null;
-  content: string;
-  likes_count: number;
-  created_at: string;
-  updated_at: string;
-  author_id: string;
-  profiles?: {
-    username: string;
-    avatar_url: string | null;
-  } | null;
-}
-
-export function transformPostWithAuthor(post: SupabasePostResponse): PostWithAuthor {
-  return {
-    ...post,
-    author_name: post.profiles?.username || "匿名用户",
-    author_avatar: post.profiles?.avatar_url || null,
-  };
-}
-
-export function transformCommentWithAuthor(comment: SupabaseCommentResponse): CommentWithAuthor {
-  return {
-    ...comment,
-    author_name: comment.profiles?.username || "匿名用户",
-    author_avatar: comment.profiles?.avatar_url || null,
-  };
-}
-
-export function transformPostsWithAuthor(posts: SupabasePostResponse[] | null): PostWithAuthor[] {
-  if (!posts || posts.length === 0) return [];
-  const result = new Array<PostWithAuthor>(posts.length);
-  for (let i = 0; i < posts.length; i++) {
-    const post = posts[i];
-    if (post) {
-      result[i] = transformPostWithAuthor(post);
-    }
-  }
-  return result;
-}
-
-export function transformCommentsWithAuthor(comments: SupabaseCommentResponse[] | null): CommentWithAuthor[] {
-  if (!comments || comments.length === 0) return [];
-  const result = new Array<CommentWithAuthor>(comments.length);
-  for (let i = 0; i < comments.length; i++) {
-    const comment = comments[i];
-    if (comment) {
-      result[i] = transformCommentWithAuthor(comment);
-    }
-  }
-  return result;
-}
-
-const TIME_UNITS: ReadonlyArray<{ unit: string; value: number; text?: string }> = [
-  { unit: "秒", value: 60, text: "刚刚" },
-  { unit: "分钟", value: 60 },
-  { unit: "小时", value: 24 },
-  { unit: "天", value: 7 },
-  { unit: "周", value: 4 },
-  { unit: "个月", value: 12 },
-];
-
-export function formatRelativeTime(dateString: string): string {
-  const date = new Date(dateString).getTime();
-  const now = Date.now();
-  let diffInSeconds = Math.floor((now - date) / 1000);
-
-  if (diffInSeconds < TIME_UNITS[0]!.value) return TIME_UNITS[0]?.text || "刚刚";
-
-  for (let i = 1; i < TIME_UNITS.length; i++) {
-    const prevUnit = TIME_UNITS[i - 1];
-    const currentUnit = TIME_UNITS[i];
-    if (!prevUnit || !currentUnit) break;
-    
-    diffInSeconds = Math.floor(diffInSeconds / prevUnit.value);
-    if (diffInSeconds < currentUnit.value) {
-      return `${diffInSeconds}${currentUnit.unit}前`;
-    }
-  }
-
-  const years = Math.floor(diffInSeconds / 12);
-  return `${years}年前`;
-}
-
-export function truncateText(text: string, maxLength: number): string {
-  if (text.length <= maxLength) return text;
-  return text.slice(0, maxLength) + "...";
 }
 
 export function checkSensitiveWords(text: string): {
@@ -130,70 +26,6 @@ export function checkSensitiveWords(text: string): {
 
 export function checkSensitiveWordsWithDetail(text: string) {
   return dfaCheck(text);
-}
-
-const USERNAME_REGEX = /^[\u4e00-\u9fa5a-zA-Z0-9_]+$/;
-
-export function validateUsername(username: string): {
-  isValid: boolean;
-  error?: string;
-} {
-  if (!username || username.trim().length === 0) {
-    return { isValid: false, error: "用户名不能为空" };
-  }
-
-  const len = username.length;
-  if (len < 2 || len > 20) {
-    return { isValid: false, error: "用户名长度需要在2-20个字符之间" };
-  }
-
-  if (!USERNAME_REGEX.test(username)) {
-    return {
-      isValid: false,
-      error: "用户名只能包含中文、字母、数字和下划线",
-    };
-  }
-
-  return { isValid: true };
-}
-
-export function validatePostContent(
-  title: string,
-  content: string
-): { isValid: boolean; errors: string[] } {
-  const errors: string[] = [];
-
-  if (!title || title.trim().length === 0) {
-    errors.push("标题不能为空");
-  } else if (title.length > 100) {
-    errors.push("标题不能超过100个字符");
-  }
-
-  if (!content || content.trim().length === 0) {
-    errors.push("内容不能为空");
-  } else if (content.length > 5000) {
-    errors.push("内容不能超过5000个字符");
-  }
-
-  return {
-    isValid: errors.length === 0,
-    errors,
-  };
-}
-
-export function validateCommentContent(content: string): {
-  isValid: boolean;
-  error?: string;
-} {
-  if (!content || content.trim().length === 0) {
-    return { isValid: false, error: "评论内容不能为空" };
-  }
-
-  if (content.length > 500) {
-    return { isValid: false, error: "评论内容不能超过500个字符" };
-  }
-
-  return { isValid: true };
 }
 
 export function debounce<T extends (...args: unknown[]) => void>(
@@ -219,11 +51,16 @@ export function calculatePostScores(
 ): Map<string, number> {
   const postScores = new Map<string, number>();
 
-  for (const pk of postKeywords) {
+  for (let i = 0, len = postKeywords.length; i < len; i++) {
+    const pk = postKeywords[i];
     const weight = userKeywordWeights.get(pk.keyword);
     if (weight) {
-      const currentScore = postScores.get(pk.post_id) || 0;
-      postScores.set(pk.post_id, currentScore + weight * pk.relevance);
+      const postId = pk.post_id;
+      let currentScore = postScores.get(postId);
+      if (currentScore === undefined) {
+        currentScore = 0;
+      }
+      postScores.set(postId, currentScore + weight * pk.relevance);
     }
   }
 
@@ -234,25 +71,16 @@ export function getTopPostIds(
   postScores: Map<string, number>,
   limit: number
 ): string[] {
-  return Array.from(postScores.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, limit)
-    .map(([id]) => id);
+  const entries = Array.from(postScores.entries());
+  entries.sort((a, b) => b[1] - a[1]);
+  const result: string[] = [];
+  const end = Math.min(limit, entries.length);
+  for (let i = 0; i < end; i++) {
+    result[i] = entries[i][0];
+  }
+  return result;
 }
 
-export function rankPostsOptimized(posts: PostWithAuthor[], limit?: number): PostWithAuthor[] {
-  return rankPosts(posts, limit);
-}
-
-export function getHotPostsOptimized(posts: PostWithAuthor[], limit?: number): PostWithAuthor[] {
-  return getHotPosts(posts, limit);
-}
-
-export function recommendPostsForUser(
-  posts: PostWithAuthor[],
-  keywords: string[],
-  likedPostIds: Set<string>,
-  limit?: number
-): PostWithAuthor[] {
-  return recommendForUser(posts, keywords, likedPostIds, limit);
+export function compareNumbers(a: number, b: number): number {
+  return (a > b) | -(a < b);
 }

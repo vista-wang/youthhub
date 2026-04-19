@@ -24,7 +24,7 @@ declare global {
   }
 }
 
-const SITE_KEY = "0x4AAAAAAC0x673kaeqxGwW-";
+const SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "0x4AAAAAAABGy-8JqLwGq0jW";
 
 export function Turnstile({
   siteKey = SITE_KEY,
@@ -93,15 +93,15 @@ export function Turnstile({
 }
 
 export function useTurnstile() {
-  const [token, setToken] = useState<string | null>(null);
+  const [token, setToken] = useState<string | undefined>(undefined);
   const [verified, setVerified] = useState(false);
 
   return {
     token,
     verified,
     onVerify: useCallback((t: string) => { setToken(t); setVerified(true); }, []),
-    onError: useCallback(() => { setToken(null); setVerified(false); }, []),
-    onExpire: useCallback(() => { setToken(null); setVerified(false); }, []),
-    reset: useCallback(() => { setToken(null); setVerified(false); }, []),
+    onError: useCallback(() => { setToken(undefined); setVerified(false); }, []),
+    onExpire: useCallback(() => { setToken(undefined); setVerified(false); }, []),
+    reset: useCallback(() => { setToken(undefined); setVerified(false); }, []),
   };
 }

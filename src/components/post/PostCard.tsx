@@ -1,6 +1,8 @@
 "use client";
 
+import { memo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Heart, MessageCircle, Clock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
@@ -15,21 +17,30 @@ interface PostCardProps {
   showFullContent?: boolean;
 }
 
-export function PostCard({ 
+function PostCardInner({ 
   post, 
   isLiked = false, 
   onLike,
   showFullContent = false 
 }: PostCardProps) {
+  const router = useRouter();
+
   const handleLike = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     onLike?.(post.id);
   };
 
+  const handleCommentClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
     <Card className="group card-hover brand-shadow overflow-hidden">
-      <Link href={`/post/${post.id}`}>
+      <article
+        onClick={() => router.push(`/post/${post.id}`)}
+        className="cursor-pointer"
+      >
         <CardContent className="p-4 md:p-5">
           <div className="flex items-start gap-3">
             <Avatar
@@ -51,7 +62,9 @@ export function PostCard({
               </div>
               
               <h3 className="mt-1.5 text-base font-semibold text-gray-900 line-clamp-2 group-hover:text-brand-blue transition-colors">
-                {post.title}
+                <Link href={`/post/${post.id}`} onClick={(e) => e.stopPropagation()}>
+                  {post.title}
+                </Link>
               </h3>
               
               <p className="mt-1.5 text-sm text-gray-600 line-clamp-2 leading-relaxed">
@@ -63,12 +76,14 @@ export function PostCard({
             </div>
           </div>
         </CardContent>
-      </Link>
+      </article>
       
       <div className="flex items-center justify-between border-t border-slate-50 bg-slate-50/50 px-4 py-2.5 md:px-5">
         <div className="flex items-center gap-4">
           <button
             onClick={handleLike}
+            aria-pressed={isLiked}
+            aria-label={isLiked ? "取消点赞" : "点赞"}
             className={cn(
               "flex items-center gap-1.5 text-sm transition-all duration-200",
               isLiked
@@ -87,6 +102,8 @@ export function PostCard({
           
           <Link
             href={`/post/${post.id}`}
+            onClick={handleCommentClick}
+            aria-label="评论"
             className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-brand-blue transition-colors"
           >
             <MessageCircle className="h-4 w-4" />
@@ -103,3 +120,5 @@ export function PostCard({
     </Card>
   );
 }
+
+export const PostCard = memo(PostCardInner);

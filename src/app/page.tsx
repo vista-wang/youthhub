@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { Navbar } from "@/components/layout";
 import { HomePage } from "./HomePage";
 import { transformPostsWithAuthor, calculatePostScores, getTopPostIds } from "@/lib/utils";
+import { POSTS_SELECT } from "@/lib/services";
+import type { SupabasePostResponse, Announcement as AnnouncementType } from "@/types/database";
 
 export const dynamic = "force-dynamic";
 
@@ -20,20 +22,7 @@ export default async function Home() {
     supabase.auth.getUser(),
     supabase
       .from("posts")
-      .select(`
-        id,
-        title,
-        content,
-        likes_count,
-        comments_count,
-        created_at,
-        updated_at,
-        author_id,
-        profiles:author_id (
-          username,
-          avatar_url
-        )
-      `)
+      .select(POSTS_SELECT)
       .eq("is_deleted", false)
       .order("created_at", { ascending: false })
       .limit(20),
@@ -55,20 +44,7 @@ export default async function Home() {
       .single(),
     supabase
       .from("posts")
-      .select(`
-        id,
-        title,
-        content,
-        likes_count,
-        comments_count,
-        created_at,
-        updated_at,
-        author_id,
-        profiles:author_id (
-          username,
-          avatar_url
-        )
-      `)
+      .select(POSTS_SELECT)
       .eq("is_deleted", false)
       .gte("likes_count", 10)
       .order("likes_count", { ascending: false })
@@ -77,7 +53,7 @@ export default async function Home() {
 
   let profile: { username: string | null; avatar_url: string | null } | null = null;
   let userKeywords: string[] = [];
-  let recommendedPosts: any[] | null = null;
+  let recommendedPosts: SupabasePostResponse[] | null = null;
 
   if (user) {
     const [profileResult, keywordsResult] = await Promise.all([
@@ -116,25 +92,12 @@ export default async function Home() {
         if (sortedPostIds.length > 0) {
           const { data: recPosts } = await supabase
             .from("posts")
-            .select(`
-              id,
-              title,
-              content,
-              likes_count,
-              comments_count,
-              created_at,
-              updated_at,
-              author_id,
-              profiles:author_id (
-                username,
-                avatar_url
-              )
-            `)
+            .select(POSTS_SELECT)
             .in("id", sortedPostIds)
             .eq("is_deleted", false);
 
           const postIdIndexMap = new Map(sortedPostIds.map((id, index) => [id, index]));
-          const typedRecPosts = (recPosts as any[] | null) || [];
+          const typedRecPosts = (recPosts as SupabasePostResponse[] | null) || [];
           
           recommendedPosts = new Array(typedRecPosts.length);
           for (const post of typedRecPosts) {
@@ -157,11 +120,11 @@ export default async function Home() {
         avatarUrl={profile?.avatar_url}
       />
       <HomePage 
-        initialPosts={transformPostsWithAuthor(posts as any[] | null)}
-        initialAnnouncements={(announcements as any[]) || []}
+        initialPosts={transformPostsWithAuthor(posts as SupabasePostResponse[] | null)}
+        initialAnnouncements={(announcements as AnnouncementType[]) || []}
         initialWeeklyTopic={weeklyTopic}
-        initialHotPosts={transformPostsWithAuthor(hotPosts as any[] | null)}
-        initialRecommendedPosts={transformPostsWithAuthor(recommendedPosts as any[] | null)}
+        initialHotPosts={transformPostsWithAuthor(hotPosts as SupabasePostResponse[] | null)}
+        initialRecommendedPosts={transformPostsWithAuthor(recommendedPosts as SupabasePostResponse[] | null)}
         initialUserKeywords={userKeywords}
         isLoggedIn={!!user}
         currentUserId={user?.id}

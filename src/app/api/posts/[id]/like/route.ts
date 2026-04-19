@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, fromTable } from "@/lib/supabase/server";
+import { validateId } from "@/lib/validation";
+import { ValidationError, UnauthorizedError, toErrorResponse } from "@/lib/errors";
 
 interface Params {
   params: Promise<{
@@ -13,17 +15,20 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const supabase = await createClient() as any;
+    
+    const idValidation = validateId(id, "帖子ID");
+    if (!idValidation.isValid) {
+      throw new ValidationError("ID无效", undefined, [idValidation.error || ""]);
+    }
+
+    const supabase = await createClient();
     
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json(
-        { error: "请先登录" },
-        { status: 401 }
-      );
+      throw new UnauthorizedError("请先登录");
     }
 
     const { data: existingLike } = await supabase
@@ -35,13 +40,10 @@ export async function POST(
       .single();
 
     if (existingLike) {
-      return NextResponse.json(
-        { error: "已经点赞过了" },
-        { status: 400 }
-      );
+      throw new ValidationError("已经点赞过了");
     }
 
-    const { error } = await supabase.from("likes").insert({
+    const { error } = await fromTable(supabase, "likes").insert({
       user_id: user.id,
       likeable_id: id,
       likeable_type: "post",
@@ -49,19 +51,16 @@ export async function POST(
 
     if (error) {
       console.error("Like error:", error);
-      return NextResponse.json(
-        { error: "点赞失败" },
-        { status: 500 }
-      );
+      throw new Error("点赞失败");
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Like error:", error);
-    return NextResponse.json(
-      { error: "服务器错误" },
-      { status: 500 }
-    );
+    const errRes = toErrorResponse(error);
+    const status = errRes.code === "VALIDATION_ERROR" ? 400 : 
+                   errRes.code === "UNAUTHORIZED" ? 401 : 500;
+    return NextResponse.json(errRes, { status });
   }
 }
 
@@ -71,6 +70,12 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+    
+    const idValidation = validateId(id, "帖子ID");
+    if (!idValidation.isValid) {
+      throw new ValidationError("ID无效", undefined, [idValidation.error || ""]);
+    }
+
     const supabase = await createClient();
     
     const {
@@ -78,10 +83,7 @@ export async function DELETE(
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json(
-        { error: "请先登录" },
-        { status: 401 }
-      );
+      throw new UnauthorizedError("请先登录");
     }
 
     const { error } = await supabase
@@ -93,18 +95,15 @@ export async function DELETE(
 
     if (error) {
       console.error("Unlike error:", error);
-      return NextResponse.json(
-        { error: "取消点赞失败" },
-        { status: 500 }
-      );
+      throw new Error("取消点赞失败");
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Unlike error:", error);
-    return NextResponse.json(
-      { error: "服务器错误" },
-      { status: 500 }
-    );
+    const errRes = toErrorResponse(error);
+    const status = errRes.code === "VALIDATION_ERROR" ? 400 : 
+                   errRes.code === "UNAUTHORIZED" ? 401 : 500;
+    return NextResponse.json(errRes, { status });
   }
 }

@@ -1,21 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { X, Megaphone, Sparkles, Info, ChevronLeft, ChevronRight } from "lucide-react";
+import { Megaphone, Sparkles, Info, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Modal } from "@/components/ui/modal";
 import { formatRelativeTime } from "@/lib/utils";
-
-export interface Announcement {
-  id: string;
-  title: string;
-  content: string;
-  type: "info" | "important" | "update" | "event";
-  priority?: number;
-  created_at?: string;
-  updated_at?: string;
-  is_active?: boolean;
-}
+import type { Announcement } from "@/types/database";
 
 const TYPE_CONFIG = {
   info: {
@@ -30,7 +20,7 @@ const TYPE_CONFIG = {
     label: "重要",
     bgColor: "bg-amber-50/80",
   },
-  update: {
+  warning: {
     icon: Megaphone,
     color: "text-brand-green bg-brand-green/10 border-brand-green/20",
     label: "更新",
@@ -96,114 +86,99 @@ export function AnnouncementModal({ isOpen, onClose }: AnnouncementModalProps) {
     }
   }, [announcements.length]);
 
-  if (!isOpen) return null;
-
   const currentAnnouncement = announcements[currentIndex];
   const hasMultiple = announcements.length > 1;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-
-      <Card className="relative w-full max-w-lg animate-slide-up shadow-2xl max-h-[85vh] flex flex-col">
-        <div className="flex items-center justify-between p-4 pb-2">
-          <div className="flex items-center gap-2">
-            <Megaphone className="h-5 w-5 text-brand-blue" />
-            <h3 className="font-bold text-lg text-gray-900">系统公告</h3>
-            {!isLoading && (
-              <span className="text-xs text-slate-400">
-                {currentIndex + 1}/{announcements.length}
-              </span>
-            )}
+    <Modal isOpen={isOpen} onClose={onClose} title="系统公告">
+      <div className="flex flex-col h-full">
+        {!isLoading && announcements.length > 0 && (
+          <div className="px-6 pt-2 text-xs text-slate-400">
+            {currentIndex + 1}/{announcements.length}
           </div>
-          <button
-            onClick={onClose}
-            className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
-          >
-            <X className="h-5 w-5" />
-          </button>
+        )}
+        <div className="flex-1 overflow-y-auto min-h-0">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-pulse-soft text-slate-400">加载中...</div>
+            </div>
+          ) : currentAnnouncement ? (
+            <>
+              <div className={`px-6 pb-3 ${TYPE_CONFIG[currentAnnouncement.type as keyof typeof TYPE_CONFIG]?.bgColor || ""}`}>
+                {(() => {
+                  const config = TYPE_CONFIG[currentAnnouncement.type as keyof typeof TYPE_CONFIG];
+                  if (!config) return null;
+                  const Icon = config.icon;
+                  return (
+                    <div className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${config.color}`}>
+                      <Icon className="h-3 w-3" />
+                      {config.label}
+                    </div>
+                  );
+                })()}
+                <h4 className="mt-2 font-semibold text-base text-gray-900">
+                  {currentAnnouncement.title}
+                </h4>
+                {currentAnnouncement.created_at && (
+                  <p className="text-xs text-slate-400 mt-1">
+                    {formatRelativeTime(currentAnnouncement.created_at)}
+                  </p>
+                )}
+              </div>
+
+              <div className="px-6 scrollbar-hide">
+                <div className="whitespace-pre-line text-sm leading-relaxed text-gray-700">
+                  {currentAnnouncement.content}
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12">
+              <Megaphone className="h-12 w-12 text-slate-200 mb-3" />
+              <p className="text-slate-500 text-sm">暂无公告</p>
+            </div>
+          )}
         </div>
 
-        {isLoading ? (
-          <CardContent className="flex items-center justify-center py-12">
-            <div className="animate-pulse-soft text-slate-400">加载中...</div>
-          </CardContent>
-        ) : currentAnnouncement ? (
-          <>
-            <div className={`px-4 pb-3 ${TYPE_CONFIG[currentAnnouncement.type as keyof typeof TYPE_CONFIG]?.bgColor || ''}`}>
-              {(() => {
-                const config = TYPE_CONFIG[currentAnnouncement.type as keyof typeof TYPE_CONFIG];
-                if (!config) return null;
-                const Icon = config.icon;
-                return (
-                  <div className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${config.color}`}>
-                    <Icon className="h-3 w-3" />
-                    {config.label}
-                  </div>
-                );
-              })()}
-              <h4 className="mt-2 font-semibold text-base text-gray-900">
-                {currentAnnouncement.title}
-              </h4>
-              {currentAnnouncement.created_at && (
-                <p className="text-xs text-slate-400 mt-1">
-                  {formatRelativeTime(currentAnnouncement.created_at)}
-                </p>
-              )}
+        {hasMultiple && (
+          <div className="shrink-0 flex items-center justify-between px-6 py-3 border-t border-slate-100">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handlePrev}
+              disabled={currentIndex <= 0}
+            >
+              <ChevronLeft className="mr-1 h-4 w-4" />
+              上一条
+            </Button>
+
+            <div className="flex gap-1.5">
+              {announcements.map((_, i) => (
+                <button
+                  key={`${currentAnnouncement.id}-${i}`}
+                  onClick={() => goToIndex(i)}
+                  className={`w-2 h-2 rounded-full transition-colors ${
+                    i === currentIndex
+                      ? "bg-brand-blue scale-125"
+                      : "bg-slate-200 hover:bg-slate-300"
+                  }`}
+                />
+              ))}
             </div>
 
-            <CardContent className="flex-1 overflow-y-auto scrollbar-hide pt-0">
-              <div className="whitespace-pre-line text-sm leading-relaxed text-gray-700">
-                {currentAnnouncement.content}
-              </div>
-            </CardContent>
-
-            {hasMultiple && (
-              <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handlePrev}
-                  disabled={currentIndex <= 0}
-                >
-                  <ChevronLeft className="mr-1 h-4 w-4" />
-                  上一条
-                </Button>
-
-                <div className="flex gap-1.5">
-                  {announcements.map((_, i) => (
-                    <button
-                      key={`${currentAnnouncement.id}-${i}`}
-                      onClick={() => goToIndex(i)}
-                      className={`w-2 h-2 rounded-full transition-colors ${
-                        i === currentIndex
-                          ? "bg-brand-blue scale-125"
-                          : "bg-slate-200 hover:bg-slate-300"
-                      }`}
-                    />
-                  ))}
-                </div>
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleNext}
-                  disabled={currentIndex >= announcements.length - 1}
-                >
-                  下一条
-                  <ChevronRight className="ml-1 h-4 w-4" />
-                </Button>
-              </div>
-            )}
-          </>
-        ) : (
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Megaphone className="h-12 w-12 text-slate-200 mb-3" />
-            <p className="text-slate-500 text-sm">暂无公告</p>
-          </CardContent>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleNext}
+              disabled={currentIndex >= announcements.length - 1}
+            >
+              下一条
+              <ChevronRight className="ml-1 h-4 w-4" />
+            </Button>
+          </div>
         )}
-      </Card>
-    </div>
+      </div>
+    </Modal>
   );
 }
 

@@ -1,33 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-
-async function checkAdmin() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { authorized: false as const, error: "请先登录", status: 401 };
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  const role = (profile as { role: string } | null)?.role || "";
-  if (!profile || !["admin", "moderator"].includes(role)) {
-    return { authorized: false as const, error: "权限不足", status: 403 };
-  }
-
-  return { authorized: true as const, supabase: supabase as any, userId: user.id };
-}
+import { requireAdmin } from "@/lib/admin";
+import { fromTable } from "@/lib/supabase/server";
+import { validateId, validateString, validateNumber, validateEnum, validateObject } from "@/lib/validation";
+import { ValidationError, toErrorResponse } from "@/lib/errors";
 
 export async function GET() {
   try {
-    const auth = await checkAdmin();
+    const auth = await requireAdmin();
     if (!auth.authorized) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
@@ -40,37 +19,60 @@ export async function GET() {
       .order("created_at", { ascending: false });
 
     if (error) {
-      return NextResponse.json({ error: "获取公告失败" }, { status: 500 });
+      throw new Error("获取公告失败");
     }
 
     return NextResponse.json({ announcements });
   } catch (error) {
-    return NextResponse.json({ error: "服务器错误" }, { status: 500 });
+    const errRes = toErrorResponse(error);
+    return NextResponse.json(errRes, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const auth = await checkAdmin();
+    const auth = await requireAdmin();
     if (!auth.authorized) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
     const { supabase, userId } = auth;
 
     const body = await request.json();
-    const { title, content, type, priority, is_active, start_at, end_at } = body;
+    const validation = validateObject(body, {
+      title: (value) => validateString(value, { 
+        minLength: 1, 
+        maxLength: 200, 
+        required: true, 
+        label: "标题" 
+      }),
+      content: (value) => validateString(value, { 
+        minLength: 1, 
+        maxLength: 10000, 
+        required: true, 
+        label: "内容" 
+      }),
+      type: (value) => validateEnum(value, ["info", "important", "warning", "event"], "类型"),
+      priority: (value) => validateNumber(value, { 
+        min: 0, 
+        max: 100, 
+        integer: true, 
+        required: false, 
+        label: "优先级" 
+      }),
+    });
 
-    if (!title || !content) {
-      return NextResponse.json({ error: "标题和内容不能为空" }, { status: 400 });
+    if (!validation.isValid) {
+      throw new ValidationError("输入验证失败", undefined, validation.errors);
     }
 
-    const { data: announcement, error } = await supabase
-      .from("announcements")
+    const { title, content, type, priority, is_active, start_at, end_at } = body;
+
+    const { data: announcement, error } = await fromTable(supabase, "announcements")
       .insert({
         title,
         content,
         type: type || "info",
-        priority: priority || 0,
+        priority: priority !== undefined ? priority : 0,
         is_active: is_active !== undefined ? is_active : true,
         start_at,
         end_at,
@@ -79,10 +81,10 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      return NextResponse.json({ error: "创建公告失败" }, { status: 500 });
+      throw new Error("创建公告失败");
     }
 
-    await supabase.from("admin_logs").insert({
+    await fromTable(supabase, "admin_logs").insert({
       admin_id: userId,
       action: "create_announcement",
       target_type: "announcement",
@@ -92,24 +94,50 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ announcement });
   } catch (error) {
-    return NextResponse.json({ error: "服务器错误" }, { status: 500 });
+    const errRes = toErrorResponse(error);
+    const status = errRes.code === "VALIDATION_ERROR" ? 400 : 500;
+    return NextResponse.json(errRes, { status });
   }
 }
 
 export async function PUT(request: NextRequest) {
   try {
-    const auth = await checkAdmin();
+    const auth = await requireAdmin();
     if (!auth.authorized) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
     const { supabase, userId } = auth;
 
     const body = await request.json();
-    const { id, title, content, type, priority, is_active, start_at, end_at } = body;
+    const validation = validateObject(body, {
+      id: (value) => validateId(value, "公告ID"),
+      title: (value) => validateString(value, { 
+        minLength: 1, 
+        maxLength: 200, 
+        required: false, 
+        label: "标题" 
+      }),
+      content: (value) => validateString(value, { 
+        minLength: 1, 
+        maxLength: 10000, 
+        required: false, 
+        label: "内容" 
+      }),
+      type: (value) => validateEnum(value, ["info", "important", "warning", "event"], "类型"),
+      priority: (value) => validateNumber(value, { 
+        min: 0, 
+        max: 100, 
+        integer: true, 
+        required: false, 
+        label: "优先级" 
+      }),
+    });
 
-    if (!id) {
-      return NextResponse.json({ error: "公告ID不能为空" }, { status: 400 });
+    if (!validation.isValid) {
+      throw new ValidationError("输入验证失败", undefined, validation.errors);
     }
+
+    const { id, title, content, type, priority, is_active, start_at, end_at } = body;
 
     const { data: announcement, error } = await supabase
       .from("announcements")
@@ -127,10 +155,10 @@ export async function PUT(request: NextRequest) {
       .single();
 
     if (error) {
-      return NextResponse.json({ error: "更新公告失败" }, { status: 500 });
+      throw new Error("更新公告失败");
     }
 
-    await supabase.from("admin_logs").insert({
+    await fromTable(supabase, "admin_logs").insert({
       admin_id: userId,
       action: "update_announcement",
       target_type: "announcement",
@@ -140,13 +168,15 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ announcement });
   } catch (error) {
-    return NextResponse.json({ error: "服务器错误" }, { status: 500 });
+    const errRes = toErrorResponse(error);
+    const status = errRes.code === "VALIDATION_ERROR" ? 400 : 500;
+    return NextResponse.json(errRes, { status });
   }
 }
 
 export async function DELETE(request: NextRequest) {
   try {
-    const auth = await checkAdmin();
+    const auth = await requireAdmin();
     if (!auth.authorized) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
@@ -155,20 +185,21 @@ export async function DELETE(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
 
-    if (!id) {
-      return NextResponse.json({ error: "公告ID不能为空" }, { status: 400 });
+    const idValidation = validateId(id, "公告ID");
+    if (!idValidation.isValid) {
+      throw new ValidationError("ID无效", undefined, [idValidation.error || ""]);
     }
 
     const { error } = await supabase
       .from("announcements")
       .delete()
-      .eq("id", id);
+      .eq("id", id!);
 
     if (error) {
-      return NextResponse.json({ error: "删除公告失败" }, { status: 500 });
+      throw new Error("删除公告失败");
     }
 
-    await supabase.from("admin_logs").insert({
+    await fromTable(supabase, "admin_logs").insert({
       admin_id: userId,
       action: "delete_announcement",
       target_type: "announcement",
@@ -177,6 +208,8 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    return NextResponse.json({ error: "服务器错误" }, { status: 500 });
+    const errRes = toErrorResponse(error);
+    const status = errRes.code === "VALIDATION_ERROR" ? 400 : 500;
+    return NextResponse.json(errRes, { status });
   }
 }

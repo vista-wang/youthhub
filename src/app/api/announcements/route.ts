@@ -43,7 +43,7 @@ export async function GET() {
         title: "💡 功能更新预告",
         content:
           "我们正在开发以下新功能：\n\n• 帖子图片上传\n• 用户等级系统\n• 话题标签功能\n• 私信功能\n• 热门排行榜",
-        type: "update" as const,
+        type: "warning" as const,
         priority: 5,
         created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
       },

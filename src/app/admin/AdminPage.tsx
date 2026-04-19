@@ -23,8 +23,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { formatRelativeTime } from "@/lib/utils";
+import { Modal } from "@/components/ui/modal";
+import { cn, formatRelativeTime } from "@/lib/utils";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { PromptDialog } from "@/components/ui/prompt-dialog";
+import type { Profile as User, Announcement, WeeklyTopic as Topic } from "@/types/database";
 
 type TabType = "posts" | "users" | "announcements" | "topics";
 
@@ -37,39 +40,6 @@ interface Post {
   likes_count: number;
   comments_count: number;
   is_deleted: boolean;
-  created_at: string;
-}
-
-interface User {
-  id: string;
-  username: string;
-  avatar_url: string | null;
-  bio: string | null;
-  role: string;
-  is_banned: boolean;
-  ban_reason: string | null;
-  banned_at: string | null;
-  created_at: string;
-}
-
-interface Announcement {
-  id: string;
-  title: string;
-  content: string;
-  type: string;
-  priority: number;
-  is_active: boolean;
-  created_at: string;
-}
-
-interface Topic {
-  id: string;
-  title: string;
-  description: string | null;
-  cover_image: string | null;
-  week_start: string;
-  week_end: string;
-  is_active: boolean;
   created_at: string;
 }
 
@@ -93,6 +63,22 @@ export function AdminPage() {
   const [showTopicModal, setShowTopicModal] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
   const [editingTopic, setEditingTopic] = useState<Topic | null>(null);
+
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    variant?: "default" | "destructive";
+  }>({ isOpen: false, title: "", message: "", onConfirm: () => {} });
+
+  const [promptDialog, setPromptDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    placeholder?: string;
+    onSubmit: (value: string) => void;
+  }>({ isOpen: false, title: "", message: "", onSubmit: () => {} });
 
   useEffect(() => {
     checkAdmin();
@@ -195,71 +181,97 @@ export function AdminPage() {
   };
 
   const handleDeletePost = async (postId: string, reason?: string) => {
-    if (!confirm("确定要删除这篇帖子吗？")) return;
-
-    try {
-      const response = await fetch("/api/admin/posts", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ postId, reason }),
-      });
-      if (response.ok) {
-        loadPosts();
-      }
-    } catch (error) {
-      console.error("Failed to delete post:", error);
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: "删除帖子",
+      message: "确定要删除这篇帖子吗？此操作不可撤销。",
+      variant: "destructive",
+      onConfirm: async () => {
+        setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
+        try {
+          const response = await fetch("/api/admin/posts", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ postId, reason }),
+          });
+          if (response.ok) {
+            loadPosts();
+          }
+        } catch (error) {
+          console.error("Failed to delete post:", error);
+        }
+      },
+    });
   };
 
   const handleRestorePost = async (postId: string) => {
-    if (!confirm("确定要恢复这篇帖子吗？")) return;
-
-    try {
-      const response = await fetch("/api/admin/posts", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ postId }),
-      });
-      if (response.ok) {
-        loadPosts();
-      }
-    } catch (error) {
-      console.error("Failed to restore post:", error);
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: "恢复帖子",
+      message: "确定要恢复这篇帖子吗？",
+      onConfirm: async () => {
+        setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
+        try {
+          const response = await fetch("/api/admin/posts", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ postId }),
+          });
+          if (response.ok) {
+            loadPosts();
+          }
+        } catch (error) {
+          console.error("Failed to restore post:", error);
+        }
+      },
+    });
   };
 
   const handleBanUser = async (userId: string, reason?: string) => {
-    if (!confirm("确定要封禁该用户吗？")) return;
-
-    try {
-      const response = await fetch("/api/admin/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, action: "ban", reason }),
-      });
-      if (response.ok) {
-        loadUsers();
-      }
-    } catch (error) {
-      console.error("Failed to ban user:", error);
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: "封禁用户",
+      message: "确定要封禁该用户吗？",
+      variant: "destructive",
+      onConfirm: async () => {
+        setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
+        try {
+          const response = await fetch("/api/admin/users", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId, action: "ban", reason }),
+          });
+          if (response.ok) {
+            loadUsers();
+          }
+        } catch (error) {
+          console.error("Failed to ban user:", error);
+        }
+      },
+    });
   };
 
   const handleUnbanUser = async (userId: string) => {
-    if (!confirm("确定要解封该用户吗？")) return;
-
-    try {
-      const response = await fetch("/api/admin/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, action: "unban" }),
-      });
-      if (response.ok) {
-        loadUsers();
-      }
-    } catch (error) {
-      console.error("Failed to unban user:", error);
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: "解封用户",
+      message: "确定要解封该用户吗？",
+      onConfirm: async () => {
+        setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
+        try {
+          const response = await fetch("/api/admin/users", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId, action: "unban" }),
+          });
+          if (response.ok) {
+            loadUsers();
+          }
+        } catch (error) {
+          console.error("Failed to unban user:", error);
+        }
+      },
+    });
   };
 
   const handleSaveAnnouncement = async (data: Partial<Announcement>) => {
@@ -285,18 +297,25 @@ export function AdminPage() {
   };
 
   const handleDeleteAnnouncement = async (id: string) => {
-    if (!confirm("确定要删除这条公告吗？")) return;
-
-    try {
-      const response = await fetch(`/api/admin/announcements?id=${id}`, {
-        method: "DELETE",
-      });
-      if (response.ok) {
-        loadAnnouncements();
-      }
-    } catch (error) {
-      console.error("Failed to delete announcement:", error);
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: "删除公告",
+      message: "确定要删除这条公告吗？此操作不可撤销。",
+      variant: "destructive",
+      onConfirm: async () => {
+        setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
+        try {
+          const response = await fetch(`/api/admin/announcements?id=${id}`, {
+            method: "DELETE",
+          });
+          if (response.ok) {
+            loadAnnouncements();
+          }
+        } catch (error) {
+          console.error("Failed to delete announcement:", error);
+        }
+      },
+    });
   };
 
   const handleSaveTopic = async (data: Partial<Topic>) => {
@@ -322,18 +341,25 @@ export function AdminPage() {
   };
 
   const handleDeleteTopic = async (id: string) => {
-    if (!confirm("确定要删除这个话题吗？")) return;
-
-    try {
-      const response = await fetch(`/api/admin/topics?id=${id}`, {
-        method: "DELETE",
-      });
-      if (response.ok) {
-        loadTopics();
-      }
-    } catch (error) {
-      console.error("Failed to delete topic:", error);
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: "删除话题",
+      message: "确定要删除这个话题吗？此操作不可撤销。",
+      variant: "destructive",
+      onConfirm: async () => {
+        setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
+        try {
+          const response = await fetch(`/api/admin/topics?id=${id}`, {
+            method: "DELETE",
+          });
+          if (response.ok) {
+            loadTopics();
+          }
+        } catch (error) {
+          console.error("Failed to delete topic:", error);
+        }
+      },
+    });
   };
 
   if (isLoading) {
@@ -368,10 +394,12 @@ export function AdminPage() {
           <p className="text-slate-500">管理社区内容、用户和公告</p>
         </div>
 
-        <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+        <div role="tablist" className="flex gap-2 mb-6 overflow-x-auto pb-2">
           {tabs.map((tab) => (
             <button
               key={tab.key}
+              role="tab"
+              aria-selected={activeTab === tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
@@ -545,8 +573,16 @@ export function AdminPage() {
                               variant="ghost"
                               size="sm"
                               onClick={() => {
-                                const reason = prompt("请输入封禁原因:");
-                                if (reason) handleBanUser(user.id, reason);
+                                setPromptDialog({
+                                  isOpen: true,
+                                  title: "封禁用户",
+                                  message: "请输入封禁原因：",
+                                  placeholder: "输入封禁原因...",
+                                  onSubmit: (reason) => {
+                                    setPromptDialog((prev) => ({ ...prev, isOpen: false }));
+                                    if (reason) handleBanUser(user.id, reason);
+                                  },
+                                });
                               }}
                               className="text-red-500 hover:text-red-600"
                             >
@@ -759,6 +795,24 @@ export function AdminPage() {
           onSave={handleSaveTopic}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        variant={confirmDialog.variant}
+      />
+
+      <PromptDialog
+        isOpen={promptDialog.isOpen}
+        onClose={() => setPromptDialog((prev) => ({ ...prev, isOpen: false }))}
+        onSubmit={promptDialog.onSubmit}
+        title={promptDialog.title}
+        message={promptDialog.message}
+        placeholder={promptDialog.placeholder}
+      />
     </main>
   );
 }
@@ -784,77 +838,69 @@ function AnnouncementModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <Card className="relative w-full max-w-lg brand-shadow">
-        <CardHeader>
-          <CardTitle>{announcement ? "编辑公告" : "新建公告"}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">标题</label>
-              <Input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-                maxLength={100}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">内容</label>
-              <Textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                required
-                rows={4}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">类型</label>
-                <select
-                  value={type}
-                  onChange={(e) => setType(e.target.value)}
-                  className="w-full h-10 px-3 rounded-lg border border-slate-200 focus:border-brand-blue focus:outline-none focus:ring-2 focus:ring-brand-blue/20 transition-all"
-                >
-                  <option value="info">普通</option>
-                  <option value="warning">警告</option>
-                  <option value="important">重要</option>
-                  <option value="event">活动</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">优先级</label>
-                <Input
-                  type="number"
-                  value={priority}
-                  onChange={(e) => setPriority(parseInt(e.target.value) || 0)}
-                  min={0}
-                />
-              </div>
-            </div>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={isActive}
-                onChange={(e) => setIsActive(e.target.checked)}
-                className="rounded"
-              />
-              <span className="text-sm text-gray-700">启用</span>
-            </label>
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="ghost" onClick={onClose}>
-                取消
-              </Button>
-              <Button type="submit" variant="primary">
-                保存
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+    <Modal isOpen={true} onClose={onClose} title={announcement ? "编辑公告" : "新建公告"}>
+      <form onSubmit={handleSubmit} className="space-y-4 p-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">标题</label>
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+            maxLength={100}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">内容</label>
+          <Textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            required
+            rows={4}
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">类型</label>
+            <select
+              value={type}
+              onChange={(e) => setType(e.target.value as Announcement["type"])}
+              className="w-full h-10 px-3 rounded-lg border border-slate-200 focus:border-brand-blue focus:outline-none focus:ring-2 focus:ring-brand-blue/20 transition-all"
+            >
+              <option value="info">普通</option>
+              <option value="warning">警告</option>
+              <option value="important">重要</option>
+              <option value="event">活动</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">优先级</label>
+            <Input
+              type="number"
+              value={priority}
+              onChange={(e) => setPriority(parseInt(e.target.value) || 0)}
+              min={0}
+            />
+          </div>
+        </div>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={isActive}
+            onChange={(e) => setIsActive(e.target.checked)}
+            className="rounded"
+          />
+          <span className="text-sm text-gray-700">启用</span>
+        </label>
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="ghost" onClick={onClose}>
+            取消
+          </Button>
+          <Button type="submit" variant="primary">
+            保存
+          </Button>
+        </div>
+      </form>
+    </Modal>
   );
 }
 
@@ -879,71 +925,63 @@ function TopicModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <Card className="relative w-full max-w-lg brand-shadow">
-        <CardHeader>
-          <CardTitle>{topic ? "编辑话题" : "新建话题"}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">标题</label>
-              <Input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-                maxLength={100}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">描述</label>
-              <Textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={3}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">开始日期</label>
-                <Input
-                  type="date"
-                  value={weekStart}
-                  onChange={(e) => setWeekStart(e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">结束日期</label>
-                <Input
-                  type="date"
-                  value={weekEnd}
-                  onChange={(e) => setWeekEnd(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={isActive}
-                onChange={(e) => setIsActive(e.target.checked)}
-                className="rounded"
-              />
-              <span className="text-sm text-gray-700">启用</span>
-            </label>
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="ghost" onClick={onClose}>
-                取消
-              </Button>
-              <Button type="submit" variant="primary">
-                保存
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+    <Modal isOpen={true} onClose={onClose} title={topic ? "编辑话题" : "新建话题"}>
+      <form onSubmit={handleSubmit} className="space-y-4 p-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">标题</label>
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+            maxLength={100}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">描述</label>
+          <Textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={3}
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">开始日期</label>
+            <Input
+              type="date"
+              value={weekStart}
+              onChange={(e) => setWeekStart(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">结束日期</label>
+            <Input
+              type="date"
+              value={weekEnd}
+              onChange={(e) => setWeekEnd(e.target.value)}
+              required
+            />
+          </div>
+        </div>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={isActive}
+            onChange={(e) => setIsActive(e.target.checked)}
+            className="rounded"
+          />
+          <span className="text-sm text-gray-700">启用</span>
+        </label>
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="ghost" onClick={onClose}>
+            取消
+          </Button>
+          <Button type="submit" variant="primary">
+            保存
+          </Button>
+        </div>
+      </form>
+    </Modal>
   );
 }

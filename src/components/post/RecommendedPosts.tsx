@@ -127,7 +127,7 @@ export function RecommendedPosts({
                     {keyword}
                     <button
                       onClick={() => onRemoveKeyword?.(keyword)}
-                      className="p-0.5 rounded-full hover:bg-slate-300"
+                      className="p-1.5 rounded-full hover:bg-slate-300 min-w-[28px] min-h-[28px] flex items-center justify-center"
                     >
                       <X className="h-3 w-3" />
                     </button>

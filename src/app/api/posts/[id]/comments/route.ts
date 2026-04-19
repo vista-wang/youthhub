@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, fromTable } from "@/lib/supabase/server";
 import { transformCommentsWithAuthor } from "@/lib/utils";
+import { validateString, validateObject, validateId } from "@/lib/validation";
+import { 
+  ValidationError, 
+  UnauthorizedError, 
+  NotFoundError,
+  toErrorResponse 
+} from "@/lib/errors";
 
 interface Params {
   params: Promise<{
@@ -14,6 +21,12 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    
+    const idValidation = validateId(id, "帖子ID");
+    if (!idValidation.isValid) {
+      throw new ValidationError("ID无效", undefined, [idValidation.error || ""]);
+    }
+
     const supabase = await createClient();
 
     const { data: comments, error } = await supabase
@@ -37,18 +50,14 @@ export async function GET(
       .order("created_at", { ascending: true });
 
     if (error) {
-      return NextResponse.json(
-        { error: "获取评论失败" },
-        { status: 500 }
-      );
+      throw new Error("获取评论失败");
     }
 
     return NextResponse.json({ comments: transformCommentsWithAuthor(comments) });
   } catch (error) {
-    return NextResponse.json(
-      { error: "服务器错误" },
-      { status: 500 }
-    );
+    const errRes = toErrorResponse(error);
+    const status = errRes.code === "VALIDATION_ERROR" ? 400 : 500;
+    return NextResponse.json(errRes, { status });
   }
 }
 
@@ -58,35 +67,37 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const supabase = await createClient() as any;
+    
+    const idValidation = validateId(id, "帖子ID");
+    if (!idValidation.isValid) {
+      throw new ValidationError("ID无效", undefined, [idValidation.error || ""]);
+    }
+
+    const supabase = await createClient();
     
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json(
-        { error: "请先登录" },
-        { status: 401 }
-      );
+      throw new UnauthorizedError("请先登录");
     }
 
     const body = await request.json();
+    const validation = validateObject(body, {
+      content: (value) => validateString(value, { 
+        minLength: 1, 
+        maxLength: 500, 
+        required: true, 
+        label: "评论内容" 
+      }),
+    });
+
+    if (!validation.isValid) {
+      throw new ValidationError("输入验证失败", undefined, validation.errors);
+    }
+
     const { content, parent_id } = body;
-
-    if (!content || !content.trim()) {
-      return NextResponse.json(
-        { error: "评论内容不能为空" },
-        { status: 400 }
-      );
-    }
-
-    if (content.length > 500) {
-      return NextResponse.json(
-        { error: "评论内容不能超过500个字符" },
-        { status: 400 }
-      );
-    }
 
     const { data: post } = await supabase
       .from("posts")
@@ -96,14 +107,10 @@ export async function POST(
       .single();
 
     if (!post) {
-      return NextResponse.json(
-        { error: "帖子不存在" },
-        { status: 404 }
-      );
+      throw new NotFoundError("帖子不存在", id);
     }
 
-    const { data: comment, error } = await supabase
-      .from("comments")
+    const { data: comment, error } = await fromTable(supabase, "comments")
       .insert({
         post_id: id,
         author_id: user.id,
@@ -124,10 +131,7 @@ export async function POST(
 
     if (error) {
       console.error("Create comment error:", error);
-      return NextResponse.json(
-        { error: "评论发表失败" },
-        { status: 500 }
-      );
+      throw new Error("评论发表失败");
     }
 
     const { data: profile } = await supabase
@@ -138,16 +142,17 @@ export async function POST(
 
     return NextResponse.json({
       comment: {
-        ...comment,
-        author_name: profile?.username || "匿名用户",
-        author_avatar: profile?.avatar_url || null,
+        ...(comment as Record<string, unknown>),
+        author_name: (profile as Record<string, unknown> | null)?.["username"] || "匿名用户",
+        author_avatar: (profile as Record<string, unknown> | null)?.["avatar_url"] || null,
       },
     });
   } catch (error) {
     console.error("Create comment error:", error);
-    return NextResponse.json(
-      { error: "服务器错误" },
-      { status: 500 }
-    );
+    const errRes = toErrorResponse(error);
+    const status = errRes.code === "VALIDATION_ERROR" ? 400 : 
+                   errRes.code === "UNAUTHORIZED" ? 401 : 
+                   errRes.code === "NOT_FOUND" ? 404 : 500;
+    return NextResponse.json(errRes, { status });
   }
 }

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Megaphone, X, ChevronRight, AlertCircle, Info, Calendar } from "lucide-react";
+import { useState, useEffect, memo, useCallback, useMemo } from "react";
+import { Megaphone, X, ChevronRight, AlertCircle, Info, Calendar, Pause, Play } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -42,24 +42,45 @@ const typeConfig = {
   },
 };
 
-export function AnnouncementsBanner({ announcements }: AnnouncementsBannerProps) {
+function AnnouncementsBannerInner({ announcements }: AnnouncementsBannerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isDismissed, setIsDismissed] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
+
+  const handleDismiss = useCallback(() => {
+    setIsDismissed(true);
+  }, []);
+
+  const handlePauseToggle = useCallback(() => {
+    setIsPaused((prev) => !prev);
+  }, []);
+
+  const handleIndexChange = useCallback((index: number) => {
+    setIsVisible(false);
+    setTimeout(() => {
+      setCurrentIndex(index);
+      setIsVisible(true);
+    }, 150);
+  }, []);
+
+  const handleNext = useCallback(() => {
+    setIsVisible(false);
+    setTimeout(() => {
+      setCurrentIndex((prev) => (prev + 1) % announcements.length);
+      setIsVisible(true);
+    }, 300);
+  }, [announcements.length]);
 
   useEffect(() => {
-    if (announcements.length <= 1) return;
+    if (announcements.length <= 1 || isPaused) return;
 
     const interval = setInterval(() => {
-      setIsVisible(false);
-      setTimeout(() => {
-        setCurrentIndex((prev) => (prev + 1) % announcements.length);
-        setIsVisible(true);
-      }, 300);
+      handleNext();
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [announcements.length]);
+  }, [announcements.length, isPaused, handleNext]);
 
   if (announcements.length === 0 || isDismissed) return null;
 
@@ -68,6 +89,19 @@ export function AnnouncementsBanner({ announcements }: AnnouncementsBannerProps)
   
   const config = typeConfig[current.type];
   const Icon = config.icon;
+
+  const badgeText = useMemo(() => {
+    switch (current.type) {
+      case "important":
+        return "重要";
+      case "warning":
+        return "注意";
+      case "event":
+        return "活动";
+      default:
+        return "公告";
+    }
+  }, [current.type]);
 
   return (
     <Card className={cn(
@@ -82,12 +116,10 @@ export function AnnouncementsBanner({ announcements }: AnnouncementsBannerProps)
             <Icon className="h-5 w-5" />
           </div>
 
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0" aria-live="polite">
             <div className="flex items-center gap-2 mb-0.5">
               <Badge variant={config.badgeVariant} className="text-xs">
-                {current.type === "important" ? "重要" : 
-                 current.type === "warning" ? "注意" : 
-                 current.type === "event" ? "活动" : "公告"}
+                {badgeText}
               </Badge>
               <span className="font-medium text-gray-900 text-sm truncate">
                 {current.title}
@@ -103,13 +135,7 @@ export function AnnouncementsBanner({ announcements }: AnnouncementsBannerProps)
               {announcements.map((_, index) => (
                 <button
                   key={index}
-                  onClick={() => {
-                    setIsVisible(false);
-                    setTimeout(() => {
-                      setCurrentIndex(index);
-                      setIsVisible(true);
-                    }, 150);
-                  }}
+                  onClick={() => handleIndexChange(index)}
                   className={cn(
                     "w-1.5 h-1.5 rounded-full transition-all",
                     index === currentIndex
@@ -121,9 +147,24 @@ export function AnnouncementsBanner({ announcements }: AnnouncementsBannerProps)
             </div>
           )}
 
+          {announcements.length > 1 && (
+            <button
+              onClick={handlePauseToggle}
+              className="shrink-0 p-1 rounded-full hover:bg-slate-200/50 transition-colors"
+              aria-label={isPaused ? "播放轮播" : "暂停轮播"}
+            >
+              {isPaused ? (
+                <Play className="h-4 w-4 text-slate-400" />
+              ) : (
+                <Pause className="h-4 w-4 text-slate-400" />
+              )}
+            </button>
+          )}
+
           <button
-            onClick={() => setIsDismissed(true)}
+            onClick={handleDismiss}
             className="shrink-0 p-1 rounded-full hover:bg-slate-200/50 transition-colors"
+            aria-label="关闭公告"
           >
             <X className="h-4 w-4 text-slate-400" />
           </button>
@@ -133,64 +174,78 @@ export function AnnouncementsBanner({ announcements }: AnnouncementsBannerProps)
   );
 }
 
-export function AnnouncementsList({ announcements }: AnnouncementsBannerProps) {
+export const AnnouncementsBanner = memo(AnnouncementsBannerInner);
+
+function AnnouncementsListInner({ announcements }: AnnouncementsBannerProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const handleToggleExpand = useCallback((id: string) => {
+    setExpandedId((prev) => prev === id ? null : id);
+  }, []);
 
   if (announcements.length === 0) return null;
 
+  const listItems = useMemo(() => {
+    return announcements.map((announcement) => {
+      const config = typeConfig[announcement.type];
+      const Icon = config.icon;
+      const isExpanded = expandedId === announcement.id;
+
+      const badgeText = announcement.type === "important" ? "重要" : 
+                        announcement.type === "warning" ? "注意" : 
+                        announcement.type === "event" ? "活动" : "公告";
+
+      return (
+        <Card 
+          key={announcement.id}
+          className={cn(
+            "overflow-hidden transition-all duration-200 cursor-pointer border",
+            config.bgColor,
+            config.borderColor,
+            "hover:shadow-md"
+          )}
+          onClick={() => handleToggleExpand(announcement.id)}
+        >
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <div className={cn("shrink-0 mt-0.5", config.iconColor)}>
+                <Icon className="h-5 w-5" />
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <Badge variant={config.badgeVariant} className="text-xs">
+                    {badgeText}
+                  </Badge>
+                  <span className="font-medium text-gray-900">
+                    {announcement.title}
+                  </span>
+                </div>
+                
+                <p className={cn(
+                  "text-sm text-gray-600 transition-all",
+                  isExpanded ? "whitespace-pre-wrap" : "line-clamp-2"
+                )}>
+                  {announcement.content}
+                </p>
+              </div>
+
+              <ChevronRight className={cn(
+                "h-4 w-4 text-slate-400 transition-transform shrink-0 mt-1",
+                isExpanded && "rotate-90"
+              )} />
+            </div>
+          </CardContent>
+        </Card>
+      );
+    });
+  }, [announcements, expandedId, handleToggleExpand]);
+
   return (
     <div className="space-y-3">
-      {announcements.map((announcement) => {
-        const config = typeConfig[announcement.type];
-        const Icon = config.icon;
-        const isExpanded = expandedId === announcement.id;
-
-        return (
-          <Card 
-            key={announcement.id}
-            className={cn(
-              "overflow-hidden transition-all duration-200 cursor-pointer border",
-              config.bgColor,
-              config.borderColor,
-              "hover:shadow-md"
-            )}
-            onClick={() => setExpandedId(isExpanded ? null : announcement.id)}
-          >
-            <CardContent className="p-4">
-              <div className="flex items-start gap-3">
-                <div className={cn("shrink-0 mt-0.5", config.iconColor)}>
-                  <Icon className="h-5 w-5" />
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Badge variant={config.badgeVariant} className="text-xs">
-                      {announcement.type === "important" ? "重要" : 
-                       announcement.type === "warning" ? "注意" : 
-                       announcement.type === "event" ? "活动" : "公告"}
-                    </Badge>
-                    <span className="font-medium text-gray-900">
-                      {announcement.title}
-                    </span>
-                  </div>
-                  
-                  <p className={cn(
-                    "text-sm text-gray-600 transition-all",
-                    isExpanded ? "whitespace-pre-wrap" : "line-clamp-2"
-                  )}>
-                    {announcement.content}
-                  </p>
-                </div>
-
-                <ChevronRight className={cn(
-                  "h-4 w-4 text-slate-400 transition-transform shrink-0 mt-1",
-                  isExpanded && "rotate-90"
-                )} />
-              </div>
-            </CardContent>
-          </Card>
-        );
-      })}
+      {listItems}
     </div>
   );
 }
+
+export const AnnouncementsList = memo(AnnouncementsListInner);
