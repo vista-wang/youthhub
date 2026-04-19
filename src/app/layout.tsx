@@ -9,12 +9,12 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "友料 YouthHub 公测版 - 初中生温暖社区",
+  title: "友料YouthHub Beta 2 - 初中生温暖社区",
   description: "一个面向初中生的轻量级社区，提供安全、积极、解压的交流环境",
   keywords: ["初中生", "社区", "论坛", "学生交流", "YouthHub", "友料"],
   authors: [{ name: "YouthHub Team" }],
   openGraph: {
-    title: "友料 YouthHub 公测版 - 初中生温暖社区",
+    title: "友料YouthHub Beta 2 - 初中生温暖社区",
     description: "一个面向初中生的轻量级社区，提供安全、积极、解压的交流环境",
     type: "website",
     locale: "zh_CN",

@@ -91,9 +91,9 @@ export function Navbar({ user, username, avatarUrl }: NavbarProps) {
                 <Sparkles className="h-5 w-5 text-white" />
               </div>
             </div>
-            <span className="text-xl font-bold text-brand-blue">友料</span>
+            <span className="text-xl font-bold text-brand-blue">友料YouthHub</span>
             <span className="ml-1 rounded-full bg-brand-green px-2 py-0.5 text-xs font-medium text-white shadow-sm">
-              公测版
+              Beta 2
             </span>
           </Link>
 

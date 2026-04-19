@@ -144,22 +144,20 @@ export function HomePage({
           </div>
         )}
 
-        <div className="mb-5">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-brand-blue">
-              <Sparkles className="h-4 w-4 text-white" />
-            </div>
-            <h1 className="text-lg font-bold text-gray-900">为你推荐</h1>
-          </div>
-        </div>
-
         {isLoggedIn && (
           <div className="mb-4">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="p-1.5 rounded-lg bg-brand-blue">
+                <Sparkles className="h-4 w-4 text-white" />
+              </div>
+              <h2 className="text-lg font-bold text-gray-900">为你推荐</h2>
+            </div>
             <RecommendedPosts
               posts={recommendedPosts}
-              keywords={userKeywords}
-              isLoggedIn={isLoggedIn}
+              likedPostIds={likedPosts}
+              onLike={handlePostLike}
               onRefresh={handleRefreshRecommended}
+              userKeywords={userKeywords}
             />
           </div>
         )}
