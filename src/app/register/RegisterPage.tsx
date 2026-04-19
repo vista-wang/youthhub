@@ -105,7 +105,7 @@ export function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-gradient-to-br from-slate-50 via-white to-blue-50/50">
+    <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-slate-50">
       <div className="w-full max-w-md">
         <Link 
           href="/"
@@ -118,14 +118,11 @@ export function RegisterPage() {
         <Card className="shadow-xl border-0">
           <CardHeader className="text-center pb-2">
             <div className="flex justify-center mb-4">
-              <div className="relative">
-                <div className="absolute inset-0 animate-pulse-soft rounded-full bg-gradient-to-r from-brand-blue to-brand-teal opacity-40 blur-md" />
-                <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-brand-blue to-brand-teal">
-                  <Sparkles className="h-8 w-8 text-white" />
-                </div>
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-blue">
+                <Sparkles className="h-8 w-8 text-white" />
               </div>
             </div>
-            <CardTitle className="text-2xl font-bold brand-text">
+            <CardTitle className="text-2xl font-bold brand-title">
               加入友料
             </CardTitle>
             <p className="text-sm text-slate-500 mt-1">

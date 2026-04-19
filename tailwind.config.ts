@@ -44,14 +44,14 @@ const config: Config = {
           foreground: "hsl(222 47% 11%)",
         },
         brand: {
-          blue: "#3B82F6",
+          blue: "#007AFF",
           "blue-light": "#93C5FD",
-          "blue-dark": "#2563EB",
+          "blue-dark": "#0056CC",
+          orange: "#FF9500",
+          purple: "#AF52DE",
           green: "#10B981",
           "green-light": "#6EE7B7",
           "green-dark": "#059669",
-          teal: "#14B8A6",
-          cyan: "#06B6D4",
           slate: {
             50: "#F8FAFC",
             100: "#F1F5F9",
@@ -67,9 +67,10 @@ const config: Config = {
         },
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        sm: "8px",
+        md: "12px",
+        lg: "16px",
+        xl: "20px",
       },
       keyframes: {
         "accordion-down": {
@@ -81,17 +82,17 @@ const config: Config = {
           to: { height: "0" },
         },
         "bounce-in": {
-          "0%": { transform: "scale(0)", opacity: "0" },
-          "50%": { transform: "scale(1.05)", opacity: "1" },
+          "0%": { transform: "scale(0.95)", opacity: "0" },
+          "60%": { transform: "scale(1.02)", opacity: "1" },
           "100%": { transform: "scale(1)", opacity: "1" },
         },
         "slide-up": {
           "0%": { transform: "translateY(10px)", opacity: "0" },
           "100%": { transform: "translateY(0)", opacity: "1" },
         },
-        "shimmer": {
-          "0%": { backgroundPosition: "-200% 0" },
-          "100%": { backgroundPosition: "200% 0" },
+        "spring": {
+          "0%": { transform: "scale(0.95)" },
+          "100%": { transform: "scale(1)" },
         },
       },
       animation: {
@@ -99,7 +100,7 @@ const config: Config = {
         "accordion-up": "accordion-up 0.2s ease-out",
         "bounce-in": "bounce-in 0.3s ease-out",
         "slide-up": "slide-up 0.3s ease-out",
-        "shimmer": "shimmer 2s linear infinite",
+        spring: "spring 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
       },
     },
   },

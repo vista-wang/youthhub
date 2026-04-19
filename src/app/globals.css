@@ -81,18 +81,15 @@
   }
 
   .card-hover {
-    @apply transition-all duration-200 hover:shadow-md hover:border-brand-blue/20;
+    @apply transition-all duration-200 hover:shadow-md;
   }
 
-  .brand-text {
-    @apply bg-gradient-to-r from-brand-blue to-brand-teal bg-clip-text text-transparent font-semibold;
+  .brand-title {
+    @apply text-brand-blue font-bold;
   }
 
-  .brand-shadow {
-    box-shadow: 
-      0 1px 3px rgba(59, 130, 246, 0.08),
-      0 4px 12px rgba(59, 130, 246, 0.05),
-      0 1px 2px rgba(0, 0, 0, 0.04);
+  .elevated-shadow {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   }
 
   .scrollbar-hide {
@@ -104,12 +101,12 @@
     display: none;
   }
 
-  .glass-effect {
-    @apply bg-white/80 backdrop-blur-md border border-slate-200/50;
+  .glass {
+    @apply bg-white/80 backdrop-blur-xl;
   }
 
   .skeleton {
-    @apply animate-pulse rounded bg-slate-200;
+    @apply animate-pulse rounded-lg bg-slate-200;
   }
 }
 
@@ -118,22 +115,13 @@
     text-wrap: balance;
   }
 
-  .animate-float {
-    animation: float 3s ease-in-out infinite;
+  .animate-spring {
+    animation: spring 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
-  @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-6px); }
-  }
-
-  .animate-pulse-soft {
-    animation: pulse-soft 2s ease-in-out infinite;
-  }
-
-  @keyframes pulse-soft {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.65; }
+  @keyframes spring {
+    0% { transform: scale(0.95); }
+    100% { transform: scale(1); }
   }
 }
 

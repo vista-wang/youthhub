@@ -82,15 +82,14 @@ function AnnouncementsBannerInner({ announcements }: AnnouncementsBannerProps) {
     return () => clearInterval(interval);
   }, [announcements.length, isPaused, handleNext]);
 
-  if (announcements.length === 0 || isDismissed) return null;
-
-  const current = announcements[currentIndex];
-  if (!current) return null;
+  // 所有 Hook 必须在早返回之前
   
-  const config = typeConfig[current.type];
-  const Icon = config.icon;
-
+  const current = announcements[currentIndex];
+  const config = current ? typeConfig[current.type] : null;
+  const Icon = config?.icon;
+  
   const badgeText = useMemo(() => {
+    if (!current) return "公告";
     switch (current.type) {
       case "important":
         return "重要";
@@ -101,7 +100,9 @@ function AnnouncementsBannerInner({ announcements }: AnnouncementsBannerProps) {
       default:
         return "公告";
     }
-  }, [current.type]);
+  }, [current]);
+
+  if (announcements.length === 0 || isDismissed || !current || !config || !Icon) return null;
 
   return (
     <Card className={cn(
@@ -183,8 +184,7 @@ function AnnouncementsListInner({ announcements }: AnnouncementsBannerProps) {
     setExpandedId((prev) => prev === id ? null : id);
   }, []);
 
-  if (announcements.length === 0) return null;
-
+  // 所有 Hook 必须在早返回之前
   const listItems = useMemo(() => {
     return announcements.map((announcement) => {
       const config = typeConfig[announcement.type];
@@ -240,6 +240,8 @@ function AnnouncementsListInner({ announcements }: AnnouncementsBannerProps) {
       );
     });
   }, [announcements, expandedId, handleToggleExpand]);
+
+  if (announcements.length === 0) return null;
 
   return (
     <div className="space-y-3">

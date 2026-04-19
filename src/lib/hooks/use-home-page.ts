@@ -3,8 +3,6 @@
 import { useState, useCallback, useRef } from "react";
 import type { PostWithAuthor } from "@/types/database";
 
-type TabType = "latest" | "hot" | "recommend";
-
 interface UseHomePageOptions {
   initialPosts: PostWithAuthor[];
   initialHotPosts: PostWithAuthor[];
@@ -14,15 +12,10 @@ interface UseHomePageOptions {
 
 interface UseHomePageReturn {
   posts: PostWithAuthor[];
-  hotPosts: PostWithAuthor[];
   recommendedPosts: PostWithAuthor[];
   userKeywords: string[];
   likedPosts: Set<string>;
-  activeTab: TabType;
   isLoading: boolean;
-  setActiveTab: (tab: TabType) => void;
-  handleRefresh: () => Promise<void>;
-  handleRefreshHot: () => Promise<void>;
   handleRefreshRecommended: () => Promise<void>;
   handleLike: (postId: string) => Promise<void>;
   handleAddKeyword: (keyword: string) => Promise<void>;
@@ -31,60 +24,30 @@ interface UseHomePageReturn {
 
 export function useHomePage({
   initialPosts,
-  initialHotPosts,
   initialRecommendedPosts,
   initialUserKeywords,
 }: UseHomePageOptions): UseHomePageReturn {
-  const [posts, setPosts] = useState<PostWithAuthor[]>(initialPosts);
-  const [hotPosts, setHotPosts] = useState<PostWithAuthor[]>(initialHotPosts);
+  const [posts] = useState<PostWithAuthor[]>(initialPosts);
   const [recommendedPosts, setRecommendedPosts] = useState<PostWithAuthor[]>(initialRecommendedPosts);
   const [userKeywords, setUserKeywords] = useState<string[]>(initialUserKeywords);
   const [likedPosts, setLikedPosts] = useState<Set<string>>(() => new Set());
-  const [activeTab, setActiveTab] = useState<TabType>("latest");
   const [isLoading, setIsLoading] = useState(false);
 
   const likedPostsRef = useRef(likedPosts);
   likedPostsRef.current = likedPosts;
 
-  const handleRefresh = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch("/api/posts");
-      const data = await response.json();
-      if (data.posts) {
-        setPosts(data.posts);
-      }
-    } catch (error) {
-      console.error("Failed to refresh posts:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const handleRefreshHot = useCallback(async () => {
-    try {
-      const response = await fetch("/api/posts/hot");
-      const data = await response.json();
-      if (data.posts) {
-        setHotPosts(data.posts);
-      }
-    } catch (error) {
-      console.error("Failed to refresh hot posts:", error);
-    }
-  }, []);
-
   const handleRefreshRecommended = useCallback(async () => {
+    setIsLoading(true);
     try {
       const response = await fetch("/api/posts/recommend");
       const data = await response.json();
       if (data.posts) {
         setRecommendedPosts(data.posts);
-        if (data.keywords) {
-          setUserKeywords(data.keywords);
-        }
       }
     } catch (error) {
       console.error("Failed to refresh recommended posts:", error);
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
@@ -163,26 +126,12 @@ export function useHomePage({
     }
   }, [handleRefreshRecommended]);
 
-  const handleTabChange = useCallback((tab: TabType) => {
-    setActiveTab(tab);
-    if (tab === "hot") {
-      handleRefreshHot();
-    } else if (tab === "recommend") {
-      handleRefreshRecommended();
-    }
-  }, [handleRefreshHot, handleRefreshRecommended]);
-
   return {
     posts,
-    hotPosts,
     recommendedPosts,
     userKeywords,
     likedPosts,
-    activeTab,
     isLoading,
-    setActiveTab: handleTabChange,
-    handleRefresh,
-    handleRefreshHot,
     handleRefreshRecommended,
     handleLike,
     handleAddKeyword,

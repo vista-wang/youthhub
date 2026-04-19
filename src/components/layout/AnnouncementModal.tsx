@@ -28,9 +28,9 @@ const TYPE_CONFIG = {
   },
   event: {
     icon: Sparkles,
-    color: "text-brand-teal bg-brand-teal/10 border-brand-teal/20",
+    color: "text-brand-blue bg-brand-blue/10 border-brand-blue/20",
     label: "活动",
-    bgColor: "bg-teal-50/80",
+    bgColor: "bg-blue-50/80",
   },
 };
 
@@ -100,7 +100,7 @@ export function AnnouncementModal({ isOpen, onClose }: AnnouncementModalProps) {
         <div className="flex-1 overflow-y-auto min-h-0">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-pulse-soft text-slate-400">加载中...</div>
+              <div className="animate-pulse text-slate-400">加载中...</div>
             </div>
           ) : currentAnnouncement ? (
             <>
@@ -191,7 +191,7 @@ export function AnnouncementButton({ count }: AnnouncementButtonProps) {
 
   return (
     <span
-      className="relative flex items-center justify-center rounded-lg p-2 text-white bg-gradient-to-r from-brand-blue to-brand-teal shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
+      className="relative flex items-center justify-center rounded-lg p-2 text-white bg-brand-blue shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
       aria-label="查看系统公告"
     >
       <Megaphone className="h-4 w-4" />
@@ -200,12 +200,7 @@ export function AnnouncementButton({ count }: AnnouncementButtonProps) {
           {count > 99 ? '99+' : count}
         </span>
       )}
-      {!showBadge && (
-        <span className="absolute -top-1 -right-1 flex h-3 w-3">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75" />
-          <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-400" />
-        </span>
-      )}
+      {/* 只在有 count 时才显示提示点，否则不显示 */}
     </span>
   );
 }

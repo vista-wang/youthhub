@@ -45,8 +45,8 @@ export function ProfilePage({ profile, posts }: ProfilePageProps) {
   return (
     <main className="min-h-screen pb-10">
       <div className="mx-auto max-w-2xl px-4 py-6">
-        <Card className="brand-shadow mb-6 overflow-hidden">
-          <div className="h-24 bg-gradient-to-r from-brand-blue via-brand-teal to-brand-green" />
+        <Card className="elevated-shadow mb-6 overflow-hidden">
+          <div className="h-24 bg-brand-blue" />
           <CardContent className="pt-0 pb-6">
             <div className="flex flex-col items-center -mt-12">
               <Avatar

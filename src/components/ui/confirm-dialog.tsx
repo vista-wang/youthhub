@@ -35,7 +35,7 @@ export function ConfirmDialog({
         <button
           onClick={onClose}
           disabled={isLoading}
-          className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors disabled:opacity-50"
+          className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors disabled:opacity-50"
         >
           {cancelText}
         </button>
@@ -43,7 +43,7 @@ export function ConfirmDialog({
           onClick={onConfirm}
           disabled={isLoading}
           className={cn(
-            "px-4 py-2 text-sm font-medium text-white rounded-xl transition-colors disabled:opacity-50",
+            "px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50",
             variant === "destructive"
               ? "bg-red-500 hover:bg-red-600"
               : "bg-brand-blue hover:bg-brand-blue/90"

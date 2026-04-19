@@ -79,9 +79,9 @@ export function LikeButton({
       <Heart
         className={cn(
           config.icon,
-          "transition-transform duration-200",
+          "transition-transform duration-200 active:scale-90",
           isLiked && "fill-current",
-          !isLoading && isLiked && "animate-bounce-in"
+          !isLoading && isLiked && "animate-spring"
         )}
       />
       {showCount && <span className={config.text}>{count}</span>}

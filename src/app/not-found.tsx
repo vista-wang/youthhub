@@ -4,7 +4,7 @@ import { Button } from "@/components/ui";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-slate-50 via-white to-blue-50/50">
+    <div className="min-h-screen flex items-center justify-center px-4 bg-slate-50">
       <div className="text-center">
         <div className="mb-6">
           <span className="text-8xl">🔍</span>

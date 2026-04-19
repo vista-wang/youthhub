@@ -48,9 +48,9 @@ export function RecommendedPosts({
 
   if (!isLoggedIn) {
     return (
-      <Card className="overflow-hidden border-brand-teal/20 bg-gradient-to-br from-brand-teal/5 to-brand-blue/5">
+      <Card className="overflow-hidden border-blue-100 bg-blue-50/50">
         <CardContent className="p-6 text-center">
-          <Sparkles className="h-8 w-8 text-brand-teal mx-auto mb-3" />
+          <Sparkles className="h-8 w-8 text-brand-blue mx-auto mb-3" />
           <h3 className="font-medium text-gray-900 mb-2">个性化推荐</h3>
           <p className="text-sm text-slate-500 mb-4">
             登录后设置感兴趣的关键词，获取专属推荐
@@ -61,11 +61,11 @@ export function RecommendedPosts({
   }
 
   return (
-    <Card className="overflow-hidden border-brand-teal/20 bg-gradient-to-br from-brand-teal/5 to-brand-blue/5">
+    <Card className="overflow-hidden border-blue-100 bg-blue-50/50">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base">
-            <div className="p-1.5 rounded-lg bg-gradient-to-br from-brand-teal to-brand-blue">
+            <div className="p-1.5 rounded-lg bg-brand-blue">
               <Sparkles className="h-4 w-4 text-white" />
             </div>
             为你推荐

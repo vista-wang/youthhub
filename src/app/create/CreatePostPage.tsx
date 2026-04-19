@@ -118,7 +118,7 @@ export function CreatePostPage() {
           </div>
         </div>
 
-        <Card className="brand-shadow">
+        <Card className="elevated-shadow">
           <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
@@ -200,7 +200,7 @@ export function CreatePostPage() {
                 </div>
               )}
 
-              <div className="rounded-lg bg-gradient-to-r from-brand-blue/5 to-brand-teal/5 border border-brand-blue/20 px-4 py-3">
+              <div className="rounded-lg bg-blue-50/50 border border-blue-100 px-4 py-3">
                 <p className="text-sm text-gray-600">
                   💡 <span className="font-medium">温馨提示：</span>
                   请友善发言，共同维护温暖社区。禁止发布违法违规、人身攻击等内容。

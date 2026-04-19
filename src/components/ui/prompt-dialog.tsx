@@ -54,7 +54,7 @@ export function PromptDialog({
             onChange={(e) => setValue(e.target.value)}
             placeholder={placeholder}
             required={required}
-            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue"
+            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue"
             autoFocus
           />
         </div>
@@ -63,14 +63,14 @@ export function PromptDialog({
             type="button"
             onClick={handleClose}
             disabled={isLoading}
-            className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors disabled:opacity-50"
           >
             {cancelText}
           </button>
           <button
             type="submit"
             disabled={isLoading || (required && !value.trim())}
-            className="px-4 py-2 text-sm font-medium text-white bg-brand-blue rounded-xl hover:bg-brand-blue/90 transition-colors disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-white bg-brand-blue rounded-lg hover:bg-brand-blue/90 transition-colors disabled:opacity-50"
           >
             {isLoading ? (
               <span className="flex items-center gap-2">

@@ -386,7 +386,7 @@ export function AdminPage() {
       <div className="mx-auto max-w-4xl px-4 py-6">
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-lg bg-gradient-to-br from-brand-blue to-brand-teal">
+            <div className="p-2 rounded-lg bg-brand-blue">
               <Shield className="h-6 w-6 text-white" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900">管理员中心</h1>
@@ -404,7 +404,7 @@ export function AdminPage() {
               className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
                 activeTab === tab.key
-                  ? "bg-gradient-to-r from-brand-blue to-brand-teal text-white shadow-md"
+                  ? "bg-brand-blue text-white shadow-sm"
                   : "bg-slate-100 text-slate-600 hover:bg-slate-200"
               )}
             >

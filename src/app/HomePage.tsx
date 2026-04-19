@@ -1,18 +1,14 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Plus, RefreshCw, Inbox } from "lucide-react";
+import { Plus, Inbox, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { PostCard, RecommendedPosts } from "@/components/post";
-import { AnnouncementsBanner } from "@/components/announcement";
 import { WeeklyTopicCard } from "@/components/topic";
 import { Button } from "@/components/ui";
 import { AuthModal } from "@/components/auth";
-import { cn } from "@/lib/utils";
 import { useHomePage } from "@/lib/hooks";
 import type { PostWithAuthor, Announcement, WeeklyTopic } from "@/types/database";
-
-type TabType = "latest" | "hot" | "recommend";
 
 interface HomePageProps {
   initialPosts: PostWithAuthor[];
@@ -27,9 +23,7 @@ interface HomePageProps {
 
 export function HomePage({ 
   initialPosts, 
-  initialAnnouncements,
   initialWeeklyTopic,
-  initialHotPosts,
   initialRecommendedPosts,
   initialUserKeywords,
   isLoggedIn,
@@ -39,20 +33,17 @@ export function HomePage({
 
   const {
     posts,
-    hotPosts,
     recommendedPosts,
     userKeywords,
     likedPosts,
-    activeTab,
     isLoading,
-    setActiveTab,
-    handleRefresh,
+    handleRefreshRecommended,
     handleLike,
     handleAddKeyword,
     handleRemoveKeyword,
   } = useHomePage({
     initialPosts,
-    initialHotPosts,
+    initialHotPosts: [],
     initialRecommendedPosts,
     initialUserKeywords,
   });
@@ -84,52 +75,36 @@ export function HomePage({
     }
   }, [isLoggedIn, handleLike]);
 
-  const handleTabClick = useCallback((tab: TabType) => {
-    setActiveTab(tab);
-  }, [setActiveTab]);
-
-  const tabs = useMemo<Array<{ key: TabType; label: string; icon: React.ReactNode }>>(() => [
-    { key: "latest", label: "最新", icon: <RefreshCw className="h-4 w-4" /> },
-    { key: "hot", label: "热门", icon: <span className="text-sm">🔥</span> },
-    ...(isLoggedIn ? [{ key: "recommend" as TabType, label: "推荐", icon: <span className="text-sm">✨</span> }] : []),
-  ], [isLoggedIn]);
-
   const displayPosts = useMemo((): PostWithAuthor[] => {
-    switch (activeTab) {
-      case "hot":
-        return hotPosts;
-      case "recommend":
-        return recommendedPosts;
-      default:
-        return posts;
+    if (isLoggedIn) {
+      return recommendedPosts.length > 0 ? recommendedPosts : posts;
     }
-  }, [activeTab, hotPosts, recommendedPosts, posts]);
+    return posts;
+  }, [posts, recommendedPosts, isLoggedIn]);
 
   const renderPosts = useMemo(() => {
     if (displayPosts.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="rounded-full bg-slate-100 p-6 mb-4">
-            <Inbox className="h-12 w-12 text-slate-400" />
+          <div className="rounded-full bg-slate-50 p-8 mb-5">
+            <Inbox className="h-16 w-16 text-slate-300" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {activeTab === "recommend" ? "暂无推荐" : "暂无帖子"}
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            {isLoggedIn ? "暂无推荐内容" : "这里还空空如也"}
           </h3>
-          <p className="text-slate-500 mb-6">
-            {activeTab === "recommend" 
-              ? "添加感兴趣的关键词，获取个性化推荐" 
-              : "成为第一个发帖的人吧！"}
+          <p className="text-slate-500 mb-6 max-w-xs">
+            {isLoggedIn 
+              ? "添加感兴趣的关键词，我们会为你精准推荐好内容 ✨" 
+              : "加入我们，成为第一个分享想法的人吧！🎉"}
           </p>
-          {activeTab === "latest" && (
-            isLoggedIn ? (
-              <Link href="/create">
-                <Button variant="primary">发布第一篇帖子</Button>
-              </Link>
-            ) : (
-              <Button variant="primary" onClick={() => openAuthModal("register")}>
-                注册并发布
-              </Button>
-            )
+          {isLoggedIn ? (
+            <Link href="/create">
+              <Button variant="primary">发布第一篇帖子</Button>
+            </Link>
+          ) : (
+            <Button variant="primary" onClick={() => openAuthModal("register")}>
+              注册并发布
+            </Button>
           )}
         </div>
       );
@@ -147,7 +122,7 @@ export function HomePage({
         ))}
       </div>
     );
-  }, [displayPosts, activeTab, isLoggedIn, likedPosts, handlePostLike, openAuthModal]);
+  }, [displayPosts, isLoggedIn, likedPosts, handlePostLike, openAuthModal]);
 
   const handleWeeklyTopicParticipate = useCallback(() => {
     if (!isLoggedIn) {
@@ -165,12 +140,6 @@ export function HomePage({
   return (
     <main className="min-h-screen pb-20">
       <div className="mx-auto max-w-3xl px-4 py-6">
-        {initialAnnouncements.length > 0 && (
-          <div className="mb-4">
-            <AnnouncementsBanner announcements={initialAnnouncements} />
-          </div>
-        )}
-
         {initialWeeklyTopic && (
           <div className="mb-4">
             <WeeklyTopicCard 
@@ -181,38 +150,19 @@ export function HomePage({
         )}
 
         <div className="mb-4 flex items-center justify-between">
-          <div role="tablist" className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg">
-            {tabs.map((tab) => (
-              <button
-                key={tab.key}
-                role="tab"
-                aria-selected={activeTab === tab.key}
-                onClick={() => handleTabClick(tab.key)}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
-                  activeTab === tab.key
-                    ? "bg-white text-brand-blue shadow-sm"
-                    : "text-slate-500 hover:text-slate-700"
-                )}
-              >
-                {tab.icon}
-                {tab.label}
-              </button>
-            ))}
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-lg bg-brand-blue">
+              <Sparkles className="h-4 w-4 text-white" />
+            </div>
+            <h1 className="text-lg font-bold text-gray-900">为你推荐</h1>
           </div>
           
           <div className="flex items-center gap-2">
-            {activeTab === "latest" && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleRefresh}
-                disabled={isLoading}
-                className="text-slate-500"
-              >
-                <RefreshCw className={`h-5 w-5 ${isLoading ? "animate-spin" : ""}`} />
+            <Link href="/hot">
+              <Button variant="ghost" size="sm">
+                热门
               </Button>
-            )}
+            </Link>
             
             {isLoggedIn ? (
               <Link href="/create">
@@ -235,7 +185,7 @@ export function HomePage({
           </div>
         </div>
 
-        {activeTab === "recommend" && isLoggedIn && (
+        {isLoggedIn && (
           <div className="mb-4">
             <RecommendedPosts
               posts={recommendedPosts}
@@ -243,17 +193,12 @@ export function HomePage({
               isLoggedIn={isLoggedIn}
               onAddKeyword={handleAddKeyword}
               onRemoveKeyword={handleRemoveKeyword}
+              onRefresh={handleRefreshRecommended}
             />
           </div>
         )}
 
         {renderPosts}
-
-        {posts.length > 0 && posts.length >= 20 && activeTab === "latest" && (
-          <div className="mt-8 text-center">
-            <p className="text-sm text-slate-400">已经到底啦 ~</p>
-          </div>
-        )}
       </div>
 
       <AuthModal
@@ -266,7 +211,7 @@ export function HomePage({
       {!isLoggedIn && (
         <div className="fixed bottom-0 left-0 right-0 border-t border-slate-100 bg-white/90 backdrop-blur-md px-4 pt-4 md:hidden" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
           <div className="flex items-center justify-between max-w-2xl mx-auto">
-            <p className="text-sm text-slate-600">加入友料，开始你的社区之旅</p>
+            <p className="text-xs text-slate-600">加入友料，开始你的社区之旅</p>
             <div className="flex gap-2">
               <Button variant="ghost" size="sm" onClick={() => openAuthModal("login")}>
                 登录

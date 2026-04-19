@@ -6,12 +6,12 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 }
 
 const variantClasses = {
-  default: "bg-brand-blue/10 text-brand-blue border-brand-blue/20",
+  default: "bg-brand-blue text-white border-brand-blue",
   secondary: "bg-slate-100 text-slate-600 border-slate-200",
   success: "bg-brand-green/10 text-brand-green border-brand-green/20",
-  warning: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+  warning: "bg-amber-500 text-white border-amber-500",
   outline: "bg-transparent border-slate-300 text-slate-600",
-  info: "bg-brand-teal/10 text-brand-teal border-brand-teal/20",
+  info: "bg-brand-purple/10 text-brand-purple border-brand-purple/20",
 };
 
 const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(

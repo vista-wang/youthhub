@@ -82,18 +82,17 @@ export function Navbar({ user, username, avatarUrl }: NavbarProps) {
   };
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-slate-200/60 bg-white/80 backdrop-blur-md">
+    <nav className="sticky top-0 z-50 w-full border-b border-slate-200/60 backdrop-blur-xl bg-white/80">
       <div className="mx-auto max-w-4xl px-4">
         <div className="flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-2 group">
             <div className="relative">
-              <div className="absolute inset-0 animate-pulse-soft rounded-full bg-gradient-to-r from-brand-blue to-brand-teal opacity-40 blur-md" />
-              <div className="relative flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-brand-blue to-brand-teal">
+              <div className="relative flex h-9 w-9 items-center justify-center rounded-full bg-brand-blue">
                 <Sparkles className="h-5 w-5 text-white" />
               </div>
             </div>
-            <span className="text-xl font-bold brand-text">友料</span>
-            <span className="ml-1 rounded-full bg-gradient-to-r from-brand-green to-brand-teal px-2 py-0.5 text-xs font-medium text-white shadow-sm">
+            <span className="text-xl font-bold text-brand-blue">友料</span>
+            <span className="ml-1 rounded-full bg-brand-green px-2 py-0.5 text-xs font-medium text-white shadow-sm">
               公测版
             </span>
           </Link>
@@ -153,7 +152,7 @@ export function Navbar({ user, username, avatarUrl }: NavbarProps) {
 
       <div
         className={cn(
-          "absolute left-0 right-0 top-full border-b border-slate-200/60 bg-white/95 backdrop-blur-md md:hidden transition-all duration-300",
+          "absolute left-0 right-0 top-full border-b border-slate-200/60 backdrop-blur-xl bg-white/80 md:hidden transition-all duration-300",
           isMenuOpen
             ? "translate-y-0 opacity-100"
             : "-translate-y-2 opacity-0 pointer-events-none"
@@ -163,7 +162,7 @@ export function Navbar({ user, username, avatarUrl }: NavbarProps) {
           <div className="flex flex-col gap-2">
             <Link
               href="/announcements"
-              className="flex items-center gap-3 rounded-lg px-4 py-3 text-brand-blue bg-gradient-to-r from-brand-blue/10 to-brand-teal/10 transition-colors hover:from-brand-blue/20 hover:to-brand-teal/20"
+              className="flex items-center gap-3 rounded-lg px-4 py-3 text-brand-blue bg-brand-blue/10 transition-colors hover:bg-brand-blue/20"
               onClick={() => setIsMenuOpen(false)}
             >
               <Megaphone className="h-5 w-5" />

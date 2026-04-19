@@ -36,7 +36,7 @@ function PostCardInner({
   };
 
   return (
-    <Card className="group card-hover brand-shadow overflow-hidden">
+    <Card className="group card-hover shadow-sm overflow-hidden">
       <article
         onClick={() => router.push(`/post/${post.id}`)}
         className="cursor-pointer"
@@ -47,7 +47,7 @@ function PostCardInner({
               src={post.author_avatar}
               alt={post.author_name}
               size="md"
-              className="shrink-0 ring-2 ring-brand-blue/20"
+              className="shrink-0 ring-2 ring-slate-100"
             />
             
             <div className="min-w-0 flex-1">
@@ -78,7 +78,7 @@ function PostCardInner({
         </CardContent>
       </article>
       
-      <div className="flex items-center justify-between border-t border-slate-50 bg-slate-50/50 px-4 py-2.5 md:px-5">
+      <div className="flex items-center justify-between border-t border-slate-50 bg-white px-4 py-2.5 md:px-5">
         <div className="flex items-center gap-4">
           <button
             onClick={handleLike}
@@ -88,7 +88,9 @@ function PostCardInner({
               "flex items-center gap-1.5 text-sm transition-all duration-200",
               isLiked
                 ? "text-red-500"
-                : "text-slate-400 hover:text-red-400"
+                : post.likes_count > 50
+                  ? "text-red-500/60 hover:text-red-500"
+                  : "text-slate-400 hover:text-red-400"
             )}
           >
             <Heart
@@ -112,7 +114,7 @@ function PostCardInner({
         </div>
         
         {post.comments_count > 10 && (
-          <Badge variant="default" className="text-xs">
+          <Badge variant="warning" className="text-xs bg-brand-orange text-white border-brand-orange">
             热门
           </Badge>
         )}

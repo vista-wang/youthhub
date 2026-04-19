@@ -26,14 +26,14 @@ const CATEGORIES: Array<{ key: CategoryType; label: string; icon: React.ElementT
   { key: "info", label: "通知", icon: Info, color: "text-brand-blue" },
   { key: "important", label: "重要", icon: Sparkles, color: "text-amber-500" },
   { key: "warning", label: "更新", icon: Megaphone, color: "text-brand-green" },
-  { key: "event", label: "活动", icon: Calendar, color: "text-brand-teal" },
+  { key: "event", label: "活动", icon: Calendar, color: "text-brand-blue" },
 ];
 
 const TYPE_CONFIG = {
   info: { icon: Info, color: "text-brand-blue bg-brand-blue/10 border-brand-blue/20", label: "通知", dotColor: "bg-brand-blue" },
   important: { icon: Sparkles, color: "text-amber-600 bg-amber-500/10 border-amber-500/20", label: "重要", dotColor: "bg-amber-500" },
   warning: { icon: Megaphone, color: "text-brand-green bg-brand-green/10 border-brand-green/20", label: "更新", dotColor: "bg-brand-green" },
-  event: { icon: Calendar, color: "text-brand-teal bg-brand-teal/10 border-brand-teal/20", label: "活动", dotColor: "bg-brand-teal" },
+  event: { icon: Calendar, color: "text-brand-blue bg-brand-blue/10 border-brand-blue/20", label: "活动", dotColor: "bg-brand-blue" },
 };
 
 export function AnnouncementsPage() {
@@ -95,7 +95,7 @@ export function AnnouncementsPage() {
         <div className="flex gap-6">
           {/* ========== 左侧边栏（B站风格）========== */}
           <aside className="w-72 shrink-0 hidden lg:block">
-            <Card className="sticky top-24 brand-shadow overflow-hidden">
+            <Card className="sticky top-24 shadow-sm overflow-hidden">
               {/* 分类导航 */}
               <div className="border-b border-slate-100 p-3">
                 <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2 px-1">分类</p>
@@ -119,7 +119,7 @@ export function AnnouncementsPage() {
                         className={cn(
                           "flex items-center gap-2.5 w-full rounded-lg px-3 py-2 text-sm font-medium transition-all",
                           activeCategory === cat.key
-                            ? "bg-gradient-to-r from-brand-blue to-brand-teal text-white shadow-sm"
+                            ? "bg-brand-blue text-white shadow-sm"
                             : "text-slate-600 hover:bg-slate-50 hover:text-gray-900"
                         )}
                       >
@@ -149,8 +149,8 @@ export function AnnouncementsPage() {
                       <div key={i} className="animate-pulse flex items-start gap-3 p-2 rounded-lg">
                         <div className="h-2.5 w-2.5 mt-1.5 rounded-full bg-slate-200 shrink-0" />
                         <div className="flex-1 space-y-2">
-                          <div className="h-4 w-3/4 rounded bg-slate-200" />
-                          <div className="h-3 w-1/2 rounded bg-slate-100" />
+                          <div className="h-4 w-3/4 rounded-lg bg-slate-200" />
+                          <div className="h-3 w-1/2 rounded-lg bg-slate-100" />
                         </div>
                       </div>
                     ))}
@@ -225,24 +225,24 @@ export function AnnouncementsPage() {
           {/* ========== 右侧正文区域 ========== */}
           <section className="flex-1 min-w-0">
             {isLoading ? (
-              <Card aria-busy="true" aria-hidden="true" className="brand-shadow animate-pulse">
+              <Card aria-busy="true" aria-hidden="true" className="shadow-sm animate-pulse">
                 <CardContent className="p-8">
                   <div className="space-y-4">
                     <div className="h-8 w-48 rounded-lg bg-slate-200" />
-                    <div className="h-4 w-32 rounded bg-slate-100" />
+                    <div className="h-4 w-32 rounded-lg bg-slate-100" />
                     <div className="h-px bg-slate-100 my-6" />
                     <div className="space-y-3">
-                      <div className="h-4 w-full rounded bg-slate-100" />
-                      <div className="h-4 w-5/6 rounded bg-slate-50" />
-                      <div className="h-4 w-4/6 rounded bg-slate-50" />
-                      <div className="h-4 w-full rounded bg-slate-100" />
-                      <div className="h-4 w-3/4 rounded bg-slate-50" />
+                      <div className="h-4 w-full rounded-lg bg-slate-100" />
+                      <div className="h-4 w-5/6 rounded-lg bg-slate-50" />
+                      <div className="h-4 w-4/6 rounded-lg bg-slate-50" />
+                      <div className="h-4 w-full rounded-lg bg-slate-100" />
+                      <div className="h-4 w-3/4 rounded-lg bg-slate-50" />
                     </div>
                   </div>
                 </CardContent>
               </Card>
             ) : error ? (
-              <Card className="brand-shadow border-dashed">
+              <Card className="shadow-sm border-dashed">
                 <CardContent className="py-20 text-center">
                   <AlertCircle className="h-12 w-12 text-slate-200 mx-auto mb-3" />
                   <p className="text-slate-500">{error}</p>
@@ -252,7 +252,7 @@ export function AnnouncementsPage() {
                 </CardContent>
               </Card>
             ) : !selectedAnnouncement ? (
-              <Card className="brand-shadow border-dashed">
+              <Card className="shadow-sm border-dashed">
                 <CardContent className="py-20 text-center">
                   <Megaphone className="h-12 w-12 text-slate-200 mx-auto mb-3" />
                   <p className="text-slate-500">暂无公告</p>
@@ -265,9 +265,9 @@ export function AnnouncementsPage() {
                 const Icon = config?.icon || Info;
 
                 return (
-                  <Card className="brand-shadow overflow-hidden">
+                  <Card className="shadow-sm overflow-hidden">
                     {/* 头部信息条 */}
-                    <div className="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-5">
+                    <div className="border-b border-slate-100 bg-slate-50 px-6 py-5">
                       <div className="flex items-center gap-3 mb-3">
                         <div className={cn("rounded-full p-2", config?.color)}>
                           <Icon className="h-5 w-5" />
@@ -382,7 +382,7 @@ export function AnnouncementsPage() {
                   className={cn(
                     "flex items-center gap-1.5 shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap",
                     activeCategory === cat.key
-                      ? "bg-gradient-to-r from-brand-blue to-brand-teal text-white shadow-sm"
+                      ? "bg-brand-blue text-white shadow-sm"
                       : "bg-slate-100 text-slate-600"
                   )}
                 >
@@ -411,7 +411,7 @@ export function AnnouncementsPage() {
                     key={announcement.id}
                     className={cn(
                       "overflow-hidden cursor-pointer transition-all",
-                      selectedId === announcement.id ? "ring-2 ring-brand-blue/30 brand-shadow" : ""
+                      selectedId === announcement.id ? "ring-2 ring-brand-blue/30 shadow-sm" : ""
                     )}
                     onClick={() => setSelectedId(announcement.id)}
                   >

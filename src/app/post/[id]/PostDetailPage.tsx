@@ -111,7 +111,7 @@ export function PostDetailPage({
           <h1 className="text-lg font-medium text-gray-900">帖子详情</h1>
         </div>
 
-        <Card className="brand-shadow mb-6">
+        <Card className="elevated-shadow mb-6">
           <CardContent className="p-5 md:p-6">
             <div className="flex items-start gap-3 mb-4">
               <Avatar
@@ -194,7 +194,7 @@ export function PostDetailPage({
         </div>
 
         {isLoggedIn ? (
-          <Card className="mb-6 brand-shadow">
+          <Card className="mb-6 elevated-shadow">
             <CardContent className="p-4">
               <CommentForm
                 onSubmit={handleCommentSubmit}
@@ -204,7 +204,7 @@ export function PostDetailPage({
             </CardContent>
           </Card>
         ) : (
-          <Card className="mb-6 border-brand-blue/20 bg-gradient-to-r from-brand-blue/5 to-brand-teal/5">
+          <Card className="mb-6 border-blue-100 bg-blue-50/50">
             <CardContent className="p-4 text-center">
               <p className="text-sm text-gray-600 mb-3">
                 登录后参与讨论

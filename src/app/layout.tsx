@@ -30,7 +30,7 @@ export default function RootLayout({
     <html lang="zh-CN">
       <body className="font-sans antialiased">
         <ToastProvider>
-          <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/50">
+          <div className="min-h-screen bg-slate-50">
             {children}
           </div>
         </ToastProvider>

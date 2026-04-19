@@ -23,7 +23,7 @@ export function WeeklyTopicCard({ topic, onParticipate }: WeeklyTopicCardProps) 
   })();
 
   return (
-    <Card className="overflow-hidden brand-shadow bg-gradient-to-br from-brand-teal/5 via-brand-blue/5 to-brand-green/5 border-brand-teal/20">
+    <Card className="overflow-hidden shadow-sm bg-blue-50/50 border-blue-100">
       <CardContent className="p-0">
         <div className="relative">
           {topic.cover_image && (
@@ -38,7 +38,7 @@ export function WeeklyTopicCard({ topic, onParticipate }: WeeklyTopicCardProps) 
           
           <div className="p-4">
             <div className="flex items-center gap-2 mb-2">
-              <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-gradient-to-r from-brand-blue to-brand-teal text-white text-xs font-medium">
+              <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-brand-blue text-white text-xs font-medium">
                 <Sparkles className="h-3 w-3" />
                 本周话题
               </div>
@@ -71,7 +71,7 @@ export function WeeklyTopicCard({ topic, onParticipate }: WeeklyTopicCardProps) 
               {topic.description && topic.description.length > 80 && (
                 <button
                   onClick={() => setIsExpanded(!isExpanded)}
-                  className="text-xs text-brand-teal hover:underline flex items-center gap-0.5"
+                  className="text-xs text-brand-blue hover:underline flex items-center gap-0.5"
                 >
                   {isExpanded ? "收起" : "展开"}
                   <ChevronRight className={cn(
@@ -90,8 +90,8 @@ export function WeeklyTopicCard({ topic, onParticipate }: WeeklyTopicCardProps) 
 
 export function WeeklyTopicMini({ topic }: { topic: WeeklyTopic }) {
   return (
-    <div className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-brand-teal/5 to-brand-blue/5 border border-brand-teal/10">
-      <div className="shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-brand-blue to-brand-teal flex items-center justify-center">
+    <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50/50 border border-blue-100">
+      <div className="shrink-0 w-8 h-8 rounded-full bg-brand-blue flex items-center justify-center">
         <Sparkles className="h-4 w-4 text-white" />
       </div>
       <div className="flex-1 min-w-0">

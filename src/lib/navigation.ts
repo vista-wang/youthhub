@@ -1,4 +1,4 @@
-import { Home, PenSquare, LucideIcon } from "lucide-react";
+import { Home, PenSquare, Flame, LucideIcon } from "lucide-react";
 
 export interface NavItem {
   href: string;
@@ -9,6 +9,7 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "首页", icon: Home },
+  { href: "/hot", label: "热门", icon: Flame },
   { href: "/create", label: "发帖", icon: PenSquare, requireAuth: true },
 ];
 

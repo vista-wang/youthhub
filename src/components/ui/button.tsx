@@ -18,7 +18,9 @@ const buttonVariants = cva(
         link:
           "text-brand-blue underline-offset-4 hover:underline",
         primary:
-          "bg-gradient-to-r from-brand-blue to-brand-teal text-white shadow-md hover:shadow-lg",
+          "bg-brand-blue text-white hover:bg-brand-blue-dark hover:shadow-md",
+        danger:
+          "bg-red-500 text-white hover:bg-red-600",
         success:
           "bg-brand-green text-white hover:bg-brand-green-dark shadow-sm hover:shadow-md",
         warning:
@@ -26,7 +28,7 @@ const buttonVariants = cva(
       },
       size: {
         default: "h-10 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
+        sm: "h-8 rounded-lg px-3 text-xs",
         lg: "h-12 rounded-xl px-8 text-base",
         icon: "h-10 w-10",
       },

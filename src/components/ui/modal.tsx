@@ -105,7 +105,7 @@ export function Modal({
       role="presentation"
     >
       <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm animate-fade-in"
+        className="fixed inset-0 bg-black/50 backdrop-blur-xl animate-fade-in"
         onClick={closeOnOverlayClick ? onClose : undefined}
         aria-hidden="true"
       />
@@ -116,7 +116,7 @@ export function Modal({
         aria-labelledby={titleId}
         tabIndex={-1}
         className={cn(
-          "relative z-10 w-full max-w-lg bg-white rounded-2xl shadow-xl animate-slide-up",
+          "relative z-10 w-full max-w-lg bg-white rounded-xl shadow-xl animate-slide-up",
           "max-h-[85vh] flex flex-col",
           className
         )}
