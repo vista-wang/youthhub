@@ -1,81 +1,72 @@
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Navbar } from "@/components/layout";
 import { ProfilePage } from "./ProfilePage";
-import type { Profile } from "@/types/database";
+import { transformPostsWithAuthor } from "@/lib/utils";
+import { POSTS_SELECT } from "@/lib/services";
+import type { SupabasePostResponse } from "@/types/database";
 
 export const dynamic = "force-dynamic";
 
-type Post = {
-  id: string;
-  title: string;
-  content: string;
-  likes_count: number;
-  comments_count: number;
-  created_at: string;
-  updated_at: string;
-  author_id: string;
-  profiles?: { username: string | null; avatar_url: string | null } | null;
-};
-
 export default async function Profile() {
   const supabase = await createClient();
-  
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+
+  const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/?auth_required=true&redirect=/profile");
+    return (
+      <>
+        <Navbar user={null} />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <p className="text-slate-500">请先登录</p>
+        </div>
+      </>
+    );
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
-
-  const typedProfile = profile as Profile | null;
-
-  const { data: posts } = await supabase
-    .from("posts")
-    .select(`
-      id,
-      title,
-      content,
-      likes_count,
-      comments_count,
-      created_at,
-      updated_at,
-      author_id,
-      profiles:author_id (
-        username,
-        avatar_url
-      )
-    `)
-    .eq("author_id", user.id)
-    .eq("is_deleted", false)
-    .order("created_at", { ascending: false })
-    .limit(10);
-
-  const typedPosts = (posts as Post[] | null) || [];
-
-  const postsWithAuthor = typedPosts.map((post) => ({
-    ...post,
-    author_name: post.profiles?.username || "匿名用户",
-    author_avatar: post.profiles?.avatar_url || null,
-  }));
+  const [
+    { data: profile },
+    { data: posts },
+    { data: likedPostIds },
+  ] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("username, avatar_url, bio, points, experience, level, is_premium, premium_expires_at")
+      .eq("id", user.id)
+      .single(),
+    supabase
+      .from("posts")
+      .select(POSTS_SELECT)
+      .eq("author_id", user.id)
+      .eq("is_deleted", false)
+      .order("created_at", { ascending: false })
+      .limit(20),
+    supabase
+      .from("likes")
+      .select("post_id")
+      .eq("user_id", user.id),
+  ]);
 
   return (
     <>
       <Navbar 
         user={user} 
-        username={typedProfile?.username} 
-        avatarUrl={typedProfile?.avatar_url}
+        username={profile?.username} 
+        avatarUrl={profile?.avatar_url}
       />
       <ProfilePage 
-        profile={typedProfile}
-        posts={postsWithAuthor}
+        profile={{
+          username: profile?.username ?? "",
+          avatar_url: profile?.avatar_url ?? null,
+          bio: profile?.bio ?? null,
+          points: profile?.points ?? 0,
+          experience: profile?.experience ?? 0,
+          level: profile?.level ?? 1,
+          is_premium: profile?.is_premium ?? false,
+          premium_expires_at: profile?.premium_expires_at ?? null,
+        }}
+        posts={transformPostsWithAuthor(posts as SupabasePostResponse[] | null)}
+        likedPostIds={new Set((likedPostIds ?? []).map((l: { post_id: string }) => l.post_id))}
+        isLoggedIn={true}
       />
     </>
   );

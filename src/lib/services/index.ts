@@ -15,12 +15,15 @@ export const POSTS_SELECT = `
   content,
   likes_count,
   comments_count,
+  image_urls,
+  attachment_urls,
   created_at,
   updated_at,
   author_id,
   profiles:author_id (
     username,
-    avatar_url
+    avatar_url,
+    level
   )
 ` as const;
 
@@ -194,7 +197,7 @@ class PostService {
     }, 30000);
   }
 
-  async createPost(authorId: string, title: string, content: string): Promise<PostWithAuthor | null> {
+  async createPost(authorId: string, title: string, content: string, imageUrls?: string[], attachmentUrls?: string[]): Promise<PostWithAuthor | null> {
     const supabase = await createClient();
 
     const { data, error } = await fromTable(supabase, "posts")
@@ -202,6 +205,8 @@ class PostService {
         author_id: authorId,
         title: title.trim(),
         content: content.trim(),
+        image_urls: imageUrls || [],
+        attachment_urls: attachmentUrls || [],
       })
       .select(POSTS_SELECT)
       .single();

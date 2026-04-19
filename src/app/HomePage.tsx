@@ -8,13 +8,11 @@ import { WeeklyTopicCard } from "@/components/topic";
 import { Button } from "@/components/ui";
 import { AuthModal } from "@/components/auth";
 import { useHomePage } from "@/lib/hooks";
-import type { PostWithAuthor, Announcement, WeeklyTopic } from "@/types/database";
+import type { PostWithAuthor, WeeklyTopic } from "@/types/database";
 
 interface HomePageProps {
   initialPosts: PostWithAuthor[];
-  initialAnnouncements: Announcement[];
   initialWeeklyTopic: WeeklyTopic | null;
-  initialHotPosts: PostWithAuthor[];
   initialRecommendedPosts: PostWithAuthor[];
   initialUserKeywords: string[];
   isLoggedIn: boolean;
@@ -39,11 +37,8 @@ export function HomePage({
     isLoading,
     handleRefreshRecommended,
     handleLike,
-    handleAddKeyword,
-    handleRemoveKeyword,
   } = useHomePage({
     initialPosts,
-    initialHotPosts: [],
     initialRecommendedPosts,
     initialUserKeywords,
   });
@@ -94,7 +89,7 @@ export function HomePage({
           </h3>
           <p className="text-slate-500 mb-6 max-w-xs">
             {isLoggedIn 
-              ? "添加感兴趣的关键词，我们会为你精准推荐好内容 ✨" 
+              ? "多浏览和点赞，我们会越来越懂你 ✨" 
               : "加入我们，成为第一个分享想法的人吧！🎉"}
           </p>
           {isLoggedIn ? (
@@ -149,39 +144,12 @@ export function HomePage({
           </div>
         )}
 
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-5">
           <div className="flex items-center gap-2">
             <div className="p-1.5 rounded-lg bg-brand-blue">
               <Sparkles className="h-4 w-4 text-white" />
             </div>
             <h1 className="text-lg font-bold text-gray-900">为你推荐</h1>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Link href="/hot">
-              <Button variant="ghost" size="sm">
-                热门
-              </Button>
-            </Link>
-            
-            {isLoggedIn ? (
-              <Link href="/create">
-                <Button variant="primary" size="sm" className="whitespace-nowrap">
-                  <Plus className="mr-1.5 h-4 w-4" />
-                  发帖
-                </Button>
-              </Link>
-            ) : (
-              <Button
-                variant="primary"
-                size="sm"
-                className="whitespace-nowrap"
-                onClick={() => openAuthModal("register")}
-              >
-                <Plus className="mr-1.5 h-4 w-4" />
-                发帖
-              </Button>
-            )}
           </div>
         </div>
 
@@ -191,8 +159,6 @@ export function HomePage({
               posts={recommendedPosts}
               keywords={userKeywords}
               isLoggedIn={isLoggedIn}
-              onAddKeyword={handleAddKeyword}
-              onRemoveKeyword={handleRemoveKeyword}
               onRefresh={handleRefreshRecommended}
             />
           </div>

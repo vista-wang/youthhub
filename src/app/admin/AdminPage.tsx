@@ -41,6 +41,8 @@ interface Post {
   comments_count: number;
   is_deleted: boolean;
   created_at: string;
+  image_urls: string[];
+  attachment_urls: string[];
 }
 
 export function AdminPage() {

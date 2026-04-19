@@ -14,34 +14,21 @@ export async function GET() {
       throw new UnauthorizedError("请先登录");
     }
 
-    const { data: keywords, error } = await supabase
-      .from("user_keywords")
+    const { data: transactions, error } = await supabase
+      .from("point_transactions")
       .select("*")
       .eq("user_id", user.id)
-      .order("weight", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(50);
 
     if (error) {
-      throw new Error("获取关键词失败");
+      throw new Error("获取点数记录失败");
     }
 
-    return NextResponse.json({ keywords });
+    return NextResponse.json({ transactions });
   } catch (error) {
     const errRes = toErrorResponse(error);
     const status = errRes.code === "UNAUTHORIZED" ? 401 : 500;
     return NextResponse.json(errRes, { status });
   }
-}
-
-export async function POST() {
-  return NextResponse.json(
-    { error: "关键词由系统自动管理，不支持手动添加" },
-    { status: 403 }
-  );
-}
-
-export async function DELETE() {
-  return NextResponse.json(
-    { error: "关键词由系统自动管理，不支持手动删除" },
-    { status: 403 }
-  );
 }

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles, ImagePlus, FileUp, X, FileText, Film, Music, Archive } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui";
 import { Input } from "@/components/ui/input";
@@ -15,13 +15,35 @@ import {
   cn 
 } from "@/lib/utils";
 
+const MAX_IMAGES = 4;
+const MAX_ATTACHMENTS = 4;
+
+interface AttachmentInfo {
+  url: string;
+  type: "image" | "file";
+  name: string;
+  mimeType: string;
+}
+
+function getFileIcon(mimeType: string) {
+  if (mimeType.startsWith("video/")) return Film;
+  if (mimeType.startsWith("audio/")) return Music;
+  if (mimeType.includes("zip") || mimeType.includes("rar") || mimeType.includes("7z")) return Archive;
+  return FileText;
+}
+
 export function CreatePostPage() {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [attachments, setAttachments] = useState<AttachmentInfo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [sensitiveWarning, setSensitiveWarning] = useState<string | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleTitleEmojiSelect = (emoji: string) => {
     setTitle((prev) => prev + emoji);
@@ -29,6 +51,93 @@ export function CreatePostPage() {
 
   const handleContentEmojiSelect = (emoji: string) => {
     setContent((prev) => prev + emoji);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const remaining = MAX_IMAGES - imageUrls.length;
+    if (remaining <= 0) return;
+
+    const filesToUpload = Array.from(files).slice(0, remaining);
+
+    setIsUploading(true);
+    try {
+      const newUrls: string[] = [];
+      for (const file of filesToUpload) {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const response = await fetch("/api/upload/attachment", {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await response.json();
+        if (data.url) {
+          newUrls.push(data.url);
+        }
+      }
+      setImageUrls((prev) => [...prev, ...newUrls]);
+    } catch (error) {
+      console.error("Failed to upload image:", error);
+    } finally {
+      setIsUploading(false);
+      if (imageInputRef.current) {
+        imageInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const remaining = MAX_ATTACHMENTS - attachments.length;
+    if (remaining <= 0) return;
+
+    const filesToUpload = Array.from(files).slice(0, remaining);
+
+    setIsUploading(true);
+    try {
+      const newAttachments: AttachmentInfo[] = [];
+      for (const file of filesToUpload) {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const response = await fetch("/api/upload/attachment", {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await response.json();
+        if (data.url) {
+          newAttachments.push({
+            url: data.url,
+            type: data.type,
+            name: data.name,
+            mimeType: data.mimeType,
+          });
+        }
+      }
+      setAttachments((prev) => [...prev, ...newAttachments]);
+    } catch (error) {
+      console.error("Failed to upload file:", error);
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setImageUrls((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleRemoveAttachment = (index: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
   };
 
   const checkContent = () => {
@@ -68,13 +177,14 @@ export function CreatePostPage() {
         body: JSON.stringify({
           title: title.trim(),
           content: content.trim(),
+          image_urls: imageUrls,
+          attachment_urls: attachments.map((a) => a.url),
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        // 处理新的错误响应格式
         const errorMessages: string[] = [];
         if (data.details && Array.isArray(data.details)) {
           errorMessages.push(...data.details);
@@ -182,6 +292,100 @@ export function CreatePostPage() {
                     {contentRemaining} 字符剩余
                   </span>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  图片（最多 {MAX_IMAGES} 张）
+                </label>
+                <div className="flex flex-wrap gap-3">
+                  {imageUrls.map((url, index) => (
+                    <div key={url} className="relative w-24 h-24 rounded-lg overflow-hidden border border-slate-200">
+                      <img
+                        src={url}
+                        alt={`图片 ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImage(index)}
+                        className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition-colors"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                  {imageUrls.length < MAX_IMAGES && (
+                    <label className="w-24 h-24 rounded-lg border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:border-brand-blue hover:bg-blue-50/50 transition-colors">
+                      {isUploading ? (
+                        <Loader2 className="h-6 w-6 text-slate-400 animate-spin" />
+                      ) : (
+                        <>
+                          <ImagePlus className="h-6 w-6 text-slate-400" />
+                          <span className="text-[10px] text-slate-400 mt-1">
+                            {imageUrls.length}/{MAX_IMAGES}
+                          </span>
+                        </>
+                      )}
+                      <input
+                        ref={imageInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                        multiple
+                        disabled={isUploading}
+                      />
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  附件（最多 {MAX_ATTACHMENTS} 个）
+                </label>
+                {attachments.length > 0 && (
+                  <div className="space-y-2 mb-2">
+                    {attachments.map((att, index) => {
+                      const Icon = getFileIcon(att.mimeType);
+                      return (
+                        <div key={att.url} className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 border border-slate-100">
+                          <Icon className="h-5 w-5 text-slate-400 shrink-0" />
+                          <span className="text-sm text-gray-700 truncate flex-1">{att.name}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveAttachment(index)}
+                            className="shrink-0 w-5 h-5 rounded-full hover:bg-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                {attachments.length < MAX_ATTACHMENTS && (
+                  <label className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-dashed border-slate-200 cursor-pointer hover:border-brand-blue hover:bg-blue-50/50 transition-colors">
+                    {isUploading ? (
+                      <Loader2 className="h-4 w-4 text-slate-400 animate-spin" />
+                    ) : (
+                      <FileUp className="h-4 w-4 text-slate-400" />
+                    )}
+                    <span className="text-sm text-slate-500">
+                      上传文件（PDF/Word/视频/音频/压缩包等）
+                    </span>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.md,.mp4,.webm,.mov,.mp3,.wav,.ogg,.zip,.rar,.7z"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      multiple
+                      disabled={isUploading}
+                    />
+                  </label>
+                )}
               </div>
 
               {sensitiveWarning && (

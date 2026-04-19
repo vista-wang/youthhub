@@ -1,15 +1,18 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Plus, RefreshCw, Inbox, Home, Flame } from "lucide-react";
+import { RefreshCw, Inbox, Flame, Clock, MessageCircle, Heart, TrendingUp } from "lucide-react";
 import Link from "next/link";
-import { PostCard } from "@/components/post";
 import { Button } from "@/components/ui";
 import { AuthModal } from "@/components/auth";
-import { cn } from "@/lib/utils";
-import type { PostWithAuthor, WeeklyTopic } from "@/types/database";
+import { cn, formatRelativeTime } from "@/lib/utils";
+import type { PostWithAuthor } from "@/types/database";
 
 type HotTabType = "latest" | "hot";
+
+function getHeatScore(post: PostWithAuthor): number {
+  return post.likes_count * 2 + post.comments_count * 3;
+}
 
 interface HotPageProps {
   initialPosts: PostWithAuthor[];
@@ -27,7 +30,7 @@ export function HotPage({
   const [posts, setPosts] = useState<PostWithAuthor[]>(initialPosts);
   const [hotPosts, setHotPosts] = useState<PostWithAuthor[]>(initialHotPosts);
   const [likedPosts, setLikedPosts] = useState<Set<string>>(() => new Set());
-  const [activeTab, setActiveTab] = useState<HotTabType>("latest");
+  const [activeTab, setActiveTab] = useState<HotTabType>("hot");
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -48,35 +51,25 @@ export function HotPage({
     setAuthModalMode(mode);
   }, []);
 
-  const handleRefreshLatest = useCallback(async () => {
+  const handleRefresh = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/posts");
+      const endpoint = activeTab === "hot" ? "/api/posts/hot" : "/api/posts";
+      const response = await fetch(endpoint);
       const data = await response.json();
       if (data.posts) {
-        setPosts(data.posts);
+        if (activeTab === "hot") {
+          setHotPosts(data.posts);
+        } else {
+          setPosts(data.posts);
+        }
       }
     } catch (error) {
-      console.error("Failed to refresh posts:", error);
+      console.error("Failed to refresh:", error);
     } finally {
       setIsLoading(false);
     }
-  }, []);
-
-  const handleRefreshHot = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch("/api/posts/hot");
-      const data = await response.json();
-      if (data.posts) {
-        setHotPosts(data.posts);
-      }
-    } catch (error) {
-      console.error("Failed to refresh hot posts:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  }, [activeTab]);
 
   const handlePostLike = useCallback(async (postId: string) => {
     if (!isLoggedIn) {
@@ -125,25 +118,105 @@ export function HotPage({
     }
   }, [isLoggedIn, likedPosts]);
 
-  const handleTabClick = useCallback((tab: HotTabType) => {
-    setActiveTab(tab);
-  }, []);
-
-  const tabs = useMemo<Array<{ key: HotTabType; label: string; icon: React.ReactNode }>>(() => [
-    { key: "latest", label: "最新", icon: <RefreshCw className="h-4 w-4" /> },
-    { key: "hot", label: "热门", icon: <Flame className="h-4 w-4" /> },
-  ], []);
-
   const displayPosts = useMemo((): PostWithAuthor[] => {
-    switch (activeTab) {
-      case "hot":
-        return hotPosts;
-      default:
-        return posts;
-    }
+    return activeTab === "hot" ? hotPosts : posts;
   }, [activeTab, hotPosts, posts]);
 
-  const renderPosts = useMemo(() => {
+  const renderHotPost = useCallback((post: PostWithAuthor, index: number) => {
+    const heatScore = getHeatScore(post);
+    const isLiked = likedPosts.has(post.id);
+    const rankColors = [
+      "bg-red-500 text-white",
+      "bg-orange-500 text-white",
+      "bg-amber-500 text-white",
+    ];
+    const rankColor = index < 3 ? rankColors[index] : "bg-slate-100 text-slate-500";
+
+    return (
+      <Link key={post.id} href={`/post/${post.id}`} className="block">
+        <div className="flex gap-4 p-4 rounded-lg bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow duration-200">
+          <div className={cn(
+            "shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
+            rankColor
+          )}>
+            {index + 1}
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-base font-semibold text-gray-900 truncate mb-1">
+              {post.title}
+            </h3>
+            <p className="text-sm text-slate-500 line-clamp-2 mb-2">
+              {post.content}
+            </p>
+            <div className="flex items-center gap-3 text-xs text-slate-400">
+              <span className="font-medium text-brand-blue">
+                {post.author_name || "匿名"}
+              </span>
+              <span className="flex items-center gap-1">
+                <Heart className={cn("h-3.5 w-3.5", isLiked ? "text-red-500 fill-current" : "")} />
+                {post.likes_count}
+              </span>
+              <span className="flex items-center gap-1">
+                <MessageCircle className="h-3.5 w-3.5" />
+                {post.comments_count}
+              </span>
+              <span className="flex items-center gap-1 text-brand-orange font-medium">
+                <Flame className="h-3.5 w-3.5" />
+                {heatScore}
+              </span>
+            </div>
+          </div>
+        </div>
+      </Link>
+    );
+  }, [likedPosts]);
+
+  const renderLatestPost = useCallback((post: PostWithAuthor, index: number) => {
+    const isLiked = likedPosts.has(post.id);
+    const isLast = index === displayPosts.length - 1;
+
+    return (
+      <Link key={post.id} href={`/post/${post.id}`} className="block">
+        <div className="flex gap-4 relative">
+          <div className="flex flex-col items-center">
+            <div className="w-2.5 h-2.5 rounded-full bg-brand-blue shrink-0 mt-1.5" />
+            {!isLast && (
+              <div className="w-px flex-1 bg-slate-200 mt-1" />
+            )}
+          </div>
+          <div className={cn("flex-1 min-w-0 pb-5", isLast && "pb-0")}>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs text-slate-400 flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                {formatRelativeTime(post.created_at)}
+              </span>
+              <span className="text-xs text-brand-blue font-medium">
+                {post.author_name || "匿名"}
+              </span>
+            </div>
+            <h3 className="text-sm font-semibold text-gray-900 mb-1">
+              {post.title}
+            </h3>
+            <p className="text-xs text-slate-500 line-clamp-1">
+              {post.content}
+            </p>
+            <div className="flex items-center gap-3 mt-1.5 text-xs text-slate-400">
+              <span className="flex items-center gap-1">
+                <Heart className={cn("h-3 w-3", isLiked ? "text-red-500 fill-current" : "")} />
+                {post.likes_count}
+              </span>
+              <span className="flex items-center gap-1">
+                <MessageCircle className="h-3 w-3" />
+                {post.comments_count}
+              </span>
+            </div>
+          </div>
+        </div>
+      </Link>
+    );
+  }, [likedPosts, displayPosts.length]);
+
+  const renderContent = useMemo(() => {
     if (displayPosts.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -158,34 +231,24 @@ export function HotPage({
               ? "快去给喜欢的帖子点个赞吧，让好内容被更多人看到 🔥" 
               : "成为第一个分享想法的人吧！🎉"}
           </p>
-          {activeTab === "latest" && (
-            isLoggedIn ? (
-              <Link href="/create">
-                <Button variant="primary">发布第一篇帖子</Button>
-              </Link>
-            ) : (
-              <Button variant="primary" onClick={() => openAuthModal("register")}>
-                注册并发布
-              </Button>
-            )
-          )}
+        </div>
+      );
+    }
+
+    if (activeTab === "hot") {
+      return (
+        <div className="space-y-3">
+          {displayPosts.map((post, index) => renderHotPost(post, index))}
         </div>
       );
     }
 
     return (
-      <div className="space-y-4">
-        {displayPosts.map((post) => (
-          <PostCard
-            key={post.id}
-            post={post}
-            isLiked={likedPosts.has(post.id)}
-            onLike={handlePostLike}
-          />
-        ))}
+      <div className="py-2">
+        {displayPosts.map((post, index) => renderLatestPost(post, index))}
       </div>
     );
-  }, [displayPosts, activeTab, isLoggedIn, likedPosts, handlePostLike, openAuthModal]);
+  }, [displayPosts, activeTab, renderHotPost, renderLatestPost]);
 
   const handleAuthModalClose = useCallback(() => {
     setShowAuthModal(false);
@@ -194,75 +257,69 @@ export function HotPage({
   return (
     <main className="min-h-screen pb-20">
       <div className="mx-auto max-w-3xl px-4 py-6">
-        <div className="mb-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-gray-600 hover:text-brand-blue">
-            <Home className="h-5 w-5" />
-            <span className="font-medium">返回首页</span>
-          </Link>
-
+        <div className="mb-5">
           <div className="flex items-center gap-2">
-            {isLoggedIn ? (
-              <Link href="/create">
-                <Button variant="primary" size="sm" className="whitespace-nowrap">
-                  <Plus className="mr-1.5 h-4 w-4" />
-                  发帖
-                </Button>
-              </Link>
-            ) : (
-              <Button
-                variant="primary"
-                size="sm"
-                className="whitespace-nowrap"
-                onClick={() => openAuthModal("register")}
-              >
-                <Plus className="mr-1.5 h-4 w-4" />
-                发帖
-              </Button>
-            )}
+            <div className="p-1.5 rounded-lg bg-brand-orange">
+              <TrendingUp className="h-4 w-4 text-white" />
+            </div>
+            <h1 className="text-lg font-bold text-gray-900">热门广场</h1>
           </div>
         </div>
 
-        <div className="mb-4 flex items-center justify-between">
-          <div role="tablist" className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg">
-            {tabs.map((tab) => (
-              <button
-                key={tab.key}
-                role="tab"
-                aria-selected={activeTab === tab.key}
-                onClick={() => handleTabClick(tab.key)}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all",
-                  activeTab === tab.key
-                    ? "bg-white text-brand-blue shadow-sm"
-                    : "text-slate-500 hover:text-slate-700"
-                )}
-              >
-                {tab.icon}
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={activeTab === "latest" ? handleRefreshLatest : handleRefreshHot}
-              disabled={isLoading}
-              className="text-slate-500"
+        <div className="mb-5 flex items-center justify-between">
+          <div className="flex items-center gap-6">
+            <button
+              role="tab"
+              aria-selected={activeTab === "hot"}
+              onClick={() => setActiveTab("hot")}
+              className={cn(
+                "pb-2 text-sm font-semibold transition-colors relative",
+                activeTab === "hot"
+                  ? "text-brand-orange"
+                  : "text-slate-400 hover:text-slate-600"
+              )}
             >
-              <RefreshCw className={cn("h-5 w-5", isLoading && "animate-spin")} />
-            </Button>
+              <span className="flex items-center gap-1.5">
+                <Flame className="h-4 w-4" />
+                最热
+              </span>
+              {activeTab === "hot" && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-orange rounded-full" />
+              )}
+            </button>
+            <button
+              role="tab"
+              aria-selected={activeTab === "latest"}
+              onClick={() => setActiveTab("latest")}
+              className={cn(
+                "pb-2 text-sm font-semibold transition-colors relative",
+                activeTab === "latest"
+                  ? "text-brand-blue"
+                  : "text-slate-400 hover:text-slate-600"
+              )}
+            >
+              <span className="flex items-center gap-1.5">
+                <Clock className="h-4 w-4" />
+                最新
+              </span>
+              {activeTab === "latest" && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-blue rounded-full" />
+              )}
+            </button>
           </div>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleRefresh}
+            disabled={isLoading}
+            className="text-slate-500"
+          >
+            <RefreshCw className={cn("h-5 w-5", isLoading && "animate-spin")} />
+          </Button>
         </div>
 
-        {renderPosts}
-
-        {posts.length > 0 && posts.length >= 20 && activeTab === "latest" && (
-          <div className="mt-8 text-center">
-            <p className="text-sm text-slate-400">已经到底啦 ~</p>
-          </div>
-        )}
+        {renderContent}
       </div>
 
       <AuthModal

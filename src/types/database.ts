@@ -19,6 +19,11 @@ export interface Database {
           is_banned: boolean
           ban_reason: string | null
           banned_at: string | null
+          points: number
+          experience: number
+          level: number
+          is_premium: boolean
+          premium_expires_at: string | null
           created_at: string
           updated_at: string
         }
@@ -31,6 +36,11 @@ export interface Database {
           is_banned?: boolean
           ban_reason?: string | null
           banned_at?: string | null
+          points?: number
+          experience?: number
+          level?: number
+          is_premium?: boolean
+          premium_expires_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -43,6 +53,11 @@ export interface Database {
           is_banned?: boolean
           ban_reason?: string | null
           banned_at?: string | null
+          points?: number
+          experience?: number
+          level?: number
+          is_premium?: boolean
+          premium_expires_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -56,6 +71,8 @@ export interface Database {
           content: string
           likes_count: number
           comments_count: number
+          image_urls: string[]
+          attachment_urls: string[]
           is_deleted: boolean
           created_at: string
           updated_at: string
@@ -67,6 +84,8 @@ export interface Database {
           content: string
           likes_count?: number
           comments_count?: number
+          image_urls?: string[]
+          attachment_urls?: string[]
           is_deleted?: boolean
           created_at?: string
           updated_at?: string
@@ -78,6 +97,8 @@ export interface Database {
           content?: string
           likes_count?: number
           comments_count?: number
+          image_urls?: string[]
+          attachment_urls?: string[]
           is_deleted?: boolean
           created_at?: string
           updated_at?: string
@@ -335,6 +356,39 @@ export interface Database {
         }
         Relationships: []
       }
+      point_transactions: {
+        Row: {
+          id: string
+          user_id: string
+          action: string
+          points: number
+          experience: number
+          description: string | null
+          reference_id: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          action: string
+          points: number
+          experience: number
+          description?: string | null
+          reference_id?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          action?: string
+          points?: number
+          experience?: number
+          description?: string | null
+          reference_id?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       posts_with_author: {
@@ -344,11 +398,14 @@ export interface Database {
           content: string
           likes_count: number
           comments_count: number
+          image_urls: string[]
+          attachment_urls: string[]
           created_at: string
           updated_at: string
           author_id: string
           author_name: string
           author_avatar: string | null
+          author_level: number
         }
         Relationships: []
       }
@@ -381,12 +438,15 @@ export interface SupabasePostResponse {
   content: string;
   likes_count: number;
   comments_count: number;
+  image_urls: string[];
+  attachment_urls: string[];
   created_at: string;
   updated_at: string;
   author_id: string;
   profiles?: {
     username: string;
     avatar_url: string | null;
+    level: number;
   } | null;
 }
 
@@ -415,10 +475,35 @@ export type WeeklyTopic = Database['public']['Tables']['weekly_topics']['Row']
 export type UserKeyword = Database['public']['Tables']['user_keywords']['Row']
 export type PostKeyword = Database['public']['Tables']['post_keywords']['Row']
 export type AdminLog = Database['public']['Tables']['admin_logs']['Row']
+export type PointTransaction = Database['public']['Tables']['point_transactions']['Row']
 
 export type PostWithAuthor = Database['public']['Views']['posts_with_author']['Row']
 export type CommentWithAuthor = Database['public']['Views']['comments_with_author']['Row']
 
 export type PostWithKeywords = PostWithAuthor & {
   keywords?: string[]
+}
+
+export type LevelInfo = {
+  level: number
+  experience: number
+  nextLevelExp: number
+  progress: number
+}
+
+export const LEVEL_THRESHOLDS = [0, 25, 50, 100, 200, 400, 800, 1600, 3200, 6400] as const
+
+export function getLevelInfo(experience: number): LevelInfo {
+  const thresholds = [...LEVEL_THRESHOLDS]
+  let level = 1
+  for (let i = thresholds.length - 1; i >= 0; i--) {
+    if (experience >= thresholds[i]) {
+      level = i + 1
+      break
+    }
+  }
+  const currentThreshold = thresholds[level - 1] ?? 0
+  const nextThreshold = thresholds[level] ?? (currentThreshold * 2)
+  const progress = (experience - currentThreshold) / (nextThreshold - currentThreshold)
+  return { level, experience, nextLevelExp: nextThreshold, progress: Math.min(progress, 1) }
 }

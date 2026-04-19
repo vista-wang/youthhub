@@ -1,0 +1,14 @@
+- [x] HotPage 中 post.author?.username 已改为 post.author_name，作者名正确显示
+- [x] point_transactions 表类型定义已添加到 database.ts
+- [x] next.config.mjs 中 ignoreBuildErrors、ignoreDuringBuilds、swcMinify 已移除
+- [x] /api/admin/users select 查询包含 points, experience, level, is_premium 字段
+- [x] /api/admin/posts select 查询包含 image_urls, attachment_urls 字段
+- [x] PostService.createPost 支持 image_urls 和 attachment_urls
+- [x] /api/posts/recommend 添加了 dynamic = "force-dynamic"
+- [x] HomePage 移除了未使用的 initialAnnouncements 和 initialHotPosts props
+- [x] useHomePage 移除了未使用的 initialHotPosts 参数
+- [x] HotPage 使用共享的 formatRelativeTime 函数
+- [x] PostCard 图片 key 使用 index 避免重复
+- [x] AdminPage Post 接口包含 image_urls 和 attachment_urls
+- [x] lint 检查通过
+- [x] 构建测试通过

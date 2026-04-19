@@ -3,21 +3,18 @@ import { Navbar } from "@/components/layout";
 import { HomePage } from "./HomePage";
 import { transformPostsWithAuthor, calculatePostScores, getTopPostIds } from "@/lib/utils";
 import { POSTS_SELECT } from "@/lib/services";
-import type { SupabasePostResponse, Announcement as AnnouncementType } from "@/types/database";
+import type { SupabasePostResponse } from "@/types/database";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const supabase = await createClient();
   const today = new Date().toISOString().split("T")[0];
-  const now = new Date().toISOString();
 
   const [
     { data: { user } },
     { data: posts },
-    { data: announcements },
     { data: weeklyTopic },
-    { data: hotPosts },
   ] = await Promise.all([
     supabase.auth.getUser(),
     supabase
@@ -27,28 +24,12 @@ export default async function Home() {
       .order("created_at", { ascending: false })
       .limit(20),
     supabase
-      .from("announcements")
-      .select("*")
-      .eq("is_active", true)
-      .or(`start_at.is.null,start_at.lte.${now}`)
-      .or(`end_at.is.null,end_at.gte.${now}`)
-      .order("priority", { ascending: false })
-      .order("created_at", { ascending: false })
-      .limit(5),
-    supabase
       .from("weekly_topics")
       .select("*")
       .eq("is_active", true)
       .lte("week_start", today)
       .gte("week_end", today)
       .single(),
-    supabase
-      .from("posts")
-      .select(POSTS_SELECT)
-      .eq("is_deleted", false)
-      .gte("likes_count", 10)
-      .order("likes_count", { ascending: false })
-      .limit(5),
   ]);
 
   let profile: { username: string | null; avatar_url: string | null } | null = null;
@@ -121,9 +102,7 @@ export default async function Home() {
       />
       <HomePage 
         initialPosts={transformPostsWithAuthor(posts as SupabasePostResponse[] | null)}
-        initialAnnouncements={(announcements as AnnouncementType[]) || []}
         initialWeeklyTopic={weeklyTopic}
-        initialHotPosts={transformPostsWithAuthor(hotPosts as SupabasePostResponse[] | null)}
         initialRecommendedPosts={transformPostsWithAuthor(recommendedPosts as SupabasePostResponse[] | null)}
         initialUserKeywords={userKeywords}
         isLoggedIn={!!user}

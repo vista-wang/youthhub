@@ -55,6 +55,9 @@ function PostCardInner({
                 <span className="font-medium text-gray-900 hover:text-brand-blue transition-colors">
                   {post.author_name}
                 </span>
+                <span className="text-[10px] font-bold text-brand-blue bg-brand-blue/10 px-1.5 py-0.5 rounded-full">
+                  Lv{post.author_level}
+                </span>
                 <div className="flex items-center gap-1 text-xs text-slate-400">
                   <Clock className="h-3 w-3" />
                   {formatRelativeTime(post.created_at)}
@@ -73,6 +76,25 @@ function PostCardInner({
                   : truncateText(post.content, 120)
                 }
               </p>
+              {post.image_urls && post.image_urls.length > 0 && (
+                <div className="mt-3 flex gap-2 overflow-x-auto">
+                  {post.image_urls.slice(0, 3).map((url, i) => (
+                    <div key={`img-${i}`} className="shrink-0 w-24 h-24 rounded-lg overflow-hidden border border-slate-100">
+                      <img
+                        src={url}
+                        alt={`图片 ${i + 1}`}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                  ))}
+                  {post.image_urls.length > 3 && (
+                    <div key="img-more" className="shrink-0 w-24 h-24 rounded-lg overflow-hidden border border-slate-100 bg-slate-50 flex items-center justify-center">
+                      <span className="text-sm text-slate-400">+{post.image_urls.length - 3}</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </CardContent>

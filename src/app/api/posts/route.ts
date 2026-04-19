@@ -64,13 +64,15 @@ export async function POST(request: NextRequest) {
       throw new ValidationError("输入验证失败", undefined, validation.errors);
     }
 
-    const { title, content } = body;
+    const { title, content, image_urls, attachment_urls } = body;
 
     const { data: post, error } = await fromTable(supabase, "posts")
       .insert({
         author_id: user.id,
         title: title.trim(),
         content: content.trim(),
+        image_urls: Array.isArray(image_urls) ? image_urls.slice(0, 4) : [],
+        attachment_urls: Array.isArray(attachment_urls) ? attachment_urls.slice(0, 4) : [],
       })
       .select()
       .single();

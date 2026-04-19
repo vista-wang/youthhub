@@ -7,7 +7,8 @@ import {
   Clock, 
   Heart, 
   MessageCircle, 
-  Share2
+  Share2,
+  FileText
 } from "lucide-react";
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
@@ -146,6 +147,42 @@ export function PostDetailPage({
             <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
               {post.content}
             </div>
+
+            {post.image_urls && post.image_urls.length > 0 && (
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                {post.image_urls.map((url, i) => (
+                  <div key={url} className="rounded-lg overflow-hidden border border-slate-100 aspect-square">
+                    <img
+                      src={url}
+                      alt={`图片 ${i + 1}`}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {post.attachment_urls && post.attachment_urls.length > 0 && (
+              <div className="mt-4 space-y-2">
+                {post.attachment_urls.map((url, i) => {
+                  const fileName = decodeURIComponent(url.split("/").pop() || `附件 ${i + 1}`);
+                  return (
+                    <a
+                      key={url}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 border border-slate-100 hover:bg-slate-100 transition-colors"
+                    >
+                      <FileText className="h-5 w-5 text-slate-400 shrink-0" />
+                      <span className="text-sm text-brand-blue truncate flex-1">{fileName}</span>
+                      <span className="text-xs text-slate-400 shrink-0">下载</span>
+                    </a>
+                  );
+                })}
+              </div>
+            )}
 
             <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-4">

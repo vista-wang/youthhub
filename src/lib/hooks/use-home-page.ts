@@ -5,7 +5,6 @@ import type { PostWithAuthor } from "@/types/database";
 
 interface UseHomePageOptions {
   initialPosts: PostWithAuthor[];
-  initialHotPosts: PostWithAuthor[];
   initialRecommendedPosts: PostWithAuthor[];
   initialUserKeywords: string[];
 }
@@ -18,8 +17,6 @@ interface UseHomePageReturn {
   isLoading: boolean;
   handleRefreshRecommended: () => Promise<void>;
   handleLike: (postId: string) => Promise<void>;
-  handleAddKeyword: (keyword: string) => Promise<void>;
-  handleRemoveKeyword: (keyword: string) => Promise<void>;
 }
 
 export function useHomePage({
@@ -29,7 +26,7 @@ export function useHomePage({
 }: UseHomePageOptions): UseHomePageReturn {
   const [posts] = useState<PostWithAuthor[]>(initialPosts);
   const [recommendedPosts, setRecommendedPosts] = useState<PostWithAuthor[]>(initialRecommendedPosts);
-  const [userKeywords, setUserKeywords] = useState<string[]>(initialUserKeywords);
+  const [userKeywords] = useState<string[]>(initialUserKeywords);
   const [likedPosts, setLikedPosts] = useState<Set<string>>(() => new Set());
   const [isLoading, setIsLoading] = useState(false);
 
@@ -94,38 +91,6 @@ export function useHomePage({
     }
   }, []);
 
-  const handleAddKeyword = useCallback(async (keyword: string) => {
-    try {
-      const response = await fetch("/api/user-keywords", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ keyword }),
-      });
-      if (response.ok) {
-        setUserKeywords((prev) =>
-          prev.includes(keyword) ? prev : [...prev, keyword]
-        );
-        handleRefreshRecommended();
-      }
-    } catch (error) {
-      console.error("Failed to add keyword:", error);
-    }
-  }, [handleRefreshRecommended]);
-
-  const handleRemoveKeyword = useCallback(async (keyword: string) => {
-    try {
-      const response = await fetch(`/api/user-keywords?keyword=${encodeURIComponent(keyword)}`, {
-        method: "DELETE",
-      });
-      if (response.ok) {
-        setUserKeywords((prev) => prev.filter((k) => k !== keyword));
-        handleRefreshRecommended();
-      }
-    } catch (error) {
-      console.error("Failed to remove keyword:", error);
-    }
-  }, [handleRefreshRecommended]);
-
   return {
     posts,
     recommendedPosts,
@@ -134,7 +99,5 @@ export function useHomePage({
     isLoading,
     handleRefreshRecommended,
     handleLike,
-    handleAddKeyword,
-    handleRemoveKeyword,
   };
 }

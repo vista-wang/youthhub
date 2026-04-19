@@ -8,11 +8,14 @@ export function transformPostWithAuthor(post: SupabasePostResponse): PostWithAut
     content: post.content,
     likes_count: post.likes_count,
     comments_count: post.comments_count,
+    image_urls: post.image_urls ?? [],
+    attachment_urls: post.attachment_urls ?? [],
     created_at: post.created_at,
     updated_at: post.updated_at,
     author_id: post.author_id,
     author_name: profiles?.username || "匿名用户",
     author_avatar: profiles?.avatar_url || null,
+    author_level: profiles?.level ?? 1,
   };
 }
 

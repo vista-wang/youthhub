@@ -48,6 +48,8 @@ export async function GET(request: NextRequest) {
         content,
         likes_count,
         comments_count,
+        image_urls,
+        attachment_urls,
         is_deleted,
         created_at,
         author_id,
