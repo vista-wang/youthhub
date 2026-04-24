@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, fromTable } from "@/lib/supabase/server";
 import { postService } from "@/lib/services";
 import { validateString, validateObject } from "@/lib/validation";
+import { checkContentWithDFA } from "@/lib/algorithms";
 import { 
   ValidationError, 
   UnauthorizedError, 
@@ -65,6 +66,20 @@ export async function POST(request: NextRequest) {
     }
 
     const { title, content, image_urls, attachment_urls } = body;
+    const textToCheck = `${title}\n${content}`;
+    const { data: sensitiveWords } = await fromTable(supabase, "sensitive_words")
+      .select("id, word, category, severity, replacement, is_active, created_at, updated_at")
+      .eq("is_active", true);
+    const moderationResult = checkContentWithDFA(textToCheck, sensitiveWords ?? []);
+
+    if (moderationResult.hasSensitiveWords) {
+      const uniqueWords = [...new Set(moderationResult.matches.map((m) => m.word))];
+      throw new ValidationError(
+        moderationResult.blockedReason ?? "内容包含敏感词，请修改后重试",
+        undefined,
+        [`检测到敏感词：${uniqueWords.join("、")}`]
+      );
+    }
 
     const { data: post, error } = await fromTable(supabase, "posts")
       .insert({

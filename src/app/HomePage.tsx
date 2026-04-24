@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Plus, Inbox, Sparkles } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { PostCard, RecommendedPosts } from "@/components/post";
 import { WeeklyTopicCard } from "@/components/topic";
 import { Button } from "@/components/ui";
@@ -26,6 +27,7 @@ export function HomePage({
   initialUserKeywords,
   isLoggedIn,
 }: HomePageProps) {
+  const router = useRouter();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<"login" | "register">("login");
 
@@ -53,8 +55,8 @@ export function HomePage({
 
   const handleAuthSuccess = useCallback(() => {
     setShowAuthModal(false);
-    window.location.reload();
-  }, []);
+    router.refresh();
+  }, [router]);
 
   const openAuthModal = useCallback((mode: "login" | "register") => {
     setShowAuthModal(true);
@@ -124,9 +126,9 @@ export function HomePage({
       setShowAuthModal(true);
       setAuthModalMode("login");
     } else {
-      window.location.href = "/create";
+      router.push("/create");
     }
-  }, [isLoggedIn]);
+  }, [isLoggedIn, router]);
 
   const handleAuthModalClose = useCallback(() => {
     setShowAuthModal(false);

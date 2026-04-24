@@ -1,3 +1,5 @@
+import path from "node:path";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -16,6 +18,7 @@ const nextConfig = {
       "tailwind-merge",
     ],
   },
+  outputFileTracingRoot: path.join(process.cwd()),
   poweredByHeader: false,
   reactStrictMode: true,
   typescript: {

@@ -42,8 +42,9 @@ export default async function Profile() {
       .limit(20),
     supabase
       .from("likes")
-      .select("post_id")
-      .eq("user_id", user.id),
+      .select("likeable_id")
+      .eq("user_id", user.id)
+      .eq("likeable_type", "post"),
   ]);
 
   return (
@@ -65,7 +66,7 @@ export default async function Profile() {
           premium_expires_at: profile?.premium_expires_at ?? null,
         }}
         posts={transformPostsWithAuthor(posts as SupabasePostResponse[] | null)}
-        likedPostIds={new Set((likedPostIds ?? []).map((l: { post_id: string }) => l.post_id))}
+        likedPostIds={new Set((likedPostIds ?? []).map((l: { likeable_id: string }) => l.likeable_id))}
         isLoggedIn={true}
       />
     </>

@@ -1,25 +1,28 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, RefreshCw, Heart } from "lucide-react";
+import { RefreshCw, Heart, MessageCircle } from "lucide-react";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui";
-import { PostCard } from "@/components/post";
+import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import type { PostWithAuthor } from "@/types/database";
 
 interface RecommendedPostsProps {
   posts: PostWithAuthor[];
-  keywords?: string[];
-  isLoggedIn: boolean;
+  userKeywords?: string[];
+  likedPostIds?: Set<string>;
+  onLike?: (postId: string) => void;
   onRefresh?: () => void;
 }
 
 export function RecommendedPosts({
   posts,
-  keywords = [],
-  isLoggedIn,
+  userKeywords = [],
+  likedPostIds = new Set<string>(),
+  onLike,
   onRefresh,
 }: RecommendedPostsProps) {
   const [isLoading, setIsLoading] = useState(false);
@@ -30,20 +33,6 @@ export function RecommendedPosts({
     await onRefresh();
     setIsLoading(false);
   };
-
-  if (!isLoggedIn) {
-    return (
-      <Card className="overflow-hidden border-blue-100 bg-blue-50/50">
-        <CardContent className="p-6 text-center">
-          <Sparkles className="h-8 w-8 text-brand-blue mx-auto mb-3" />
-          <h3 className="font-semibold text-gray-900 mb-2">个性化推荐</h3>
-          <p className="text-sm text-slate-500">
-            登录后获取专属推荐，越用越懂你
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <Card className="overflow-hidden border-blue-100 bg-blue-50/50">
@@ -70,10 +59,10 @@ export function RecommendedPosts({
       </CardHeader>
 
       <CardContent className="pt-0">
-        {keywords.length > 0 && (
+        {userKeywords.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-3">
             <span className="text-xs text-slate-400 mr-1">猜你感兴趣</span>
-            {keywords.slice(0, 5).map((keyword) => (
+            {userKeywords.slice(0, 5).map((keyword) => (
               <Badge key={keyword} variant="secondary" className="text-xs">
                 {keyword}
               </Badge>
@@ -91,7 +80,34 @@ export function RecommendedPosts({
         ) : (
           <div className="space-y-3">
             {posts.slice(0, 3).map((post) => (
-              <PostCard key={post.id} post={post} />
+              <article key={post.id} className="rounded-xl border border-blue-100 bg-white p-3">
+                <Link href={`/post/${post.id}`} className="block">
+                  <h3 className="line-clamp-1 text-sm font-semibold text-gray-900 hover:text-brand-blue">
+                    {post.title}
+                  </h3>
+                  <p className="mt-1 line-clamp-2 text-xs text-slate-600">{post.content}</p>
+                </Link>
+                <div className="mt-2 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <Avatar src={post.author_avatar} alt={post.author_name} size="sm" />
+                    <span className="max-w-24 truncate">{post.author_name}</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-slate-500">
+                    <button
+                      onClick={() => onLike?.(post.id)}
+                      className={cn("inline-flex items-center gap-1", likedPostIds.has(post.id) && "text-red-500")}
+                      aria-label={likedPostIds.has(post.id) ? "取消点赞" : "点赞"}
+                    >
+                      <Heart className={cn("h-3.5 w-3.5", likedPostIds.has(post.id) && "fill-current")} />
+                      {post.likes_count}
+                    </button>
+                    <span className="inline-flex items-center gap-1">
+                      <MessageCircle className="h-3.5 w-3.5" />
+                      {post.comments_count}
+                    </span>
+                  </div>
+                </div>
+              </article>
             ))}
           </div>
         )}

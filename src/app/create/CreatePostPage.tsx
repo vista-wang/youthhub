@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { ArrowLeft, Loader2, Sparkles, ImagePlus, FileUp, X, FileText, Film, Music, Archive } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui";
@@ -301,10 +302,12 @@ export function CreatePostPage() {
                 <div className="flex flex-wrap gap-3">
                   {imageUrls.map((url, index) => (
                     <div key={url} className="relative w-24 h-24 rounded-lg overflow-hidden border border-slate-200">
-                      <img
+                      <Image
                         src={url}
                         alt={`图片 ${index + 1}`}
-                        className="w-full h-full object-cover"
+                        width={96}
+                        height={96}
+                        className="h-full w-full object-cover"
                       />
                       <button
                         type="button"

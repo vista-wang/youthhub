@@ -2,6 +2,7 @@
 
 import { memo } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Heart, MessageCircle, Clock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -80,11 +81,12 @@ function PostCardInner({
                 <div className="mt-3 flex gap-2 overflow-x-auto">
                   {post.image_urls.slice(0, 3).map((url, i) => (
                     <div key={`img-${i}`} className="shrink-0 w-24 h-24 rounded-lg overflow-hidden border border-slate-100">
-                      <img
+                      <Image
                         src={url}
                         alt={`图片 ${i + 1}`}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
+                        width={96}
+                        height={96}
+                        className="h-full w-full object-cover"
                       />
                     </div>
                   ))}
