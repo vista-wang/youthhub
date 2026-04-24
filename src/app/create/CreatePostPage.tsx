@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { EmojiPicker } from "@/components/ui/emoji-picker";
 import { Card, CardContent } from "@/components/ui/card";
+import { parseApiError } from "@/lib/api-client";
 import { 
   validatePostContent, 
   checkSensitiveWords,
@@ -53,6 +54,21 @@ export function CreatePostPage() {
   const [sensitiveWarning, setSensitiveWarning] = useState<string | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const removeUploadedFile = async (url: string): Promise<boolean> => {
+    try {
+      const response = await fetch("/api/upload/attachment", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ url }),
+      });
+      return response.ok;
+    } catch {
+      return false;
+    }
+  };
 
   const handleTitleEmojiSelect = (emoji: string) => {
     setTitle((prev) => prev + emoji);
@@ -162,12 +178,28 @@ export function CreatePostPage() {
     }
   };
 
-  const handleRemoveImage = (index: number) => {
+  const handleRemoveImage = async (index: number) => {
+    const target = imageUrls[index];
+    if (!target) {
+      return;
+    }
     setImageUrls((prev) => prev.filter((_, i) => i !== index));
+    const removed = await removeUploadedFile(target);
+    if (!removed) {
+      setErrors((prev) => [...prev, "图片已从表单移除，但云端删除失败，请稍后重试"]);
+    }
   };
 
-  const handleRemoveAttachment = (index: number) => {
+  const handleRemoveAttachment = async (index: number) => {
+    const target = attachments[index];
+    if (!target) {
+      return;
+    }
     setAttachments((prev) => prev.filter((_, i) => i !== index));
+    const removed = await removeUploadedFile(target.url);
+    if (!removed) {
+      setErrors((prev) => [...prev, "附件已从表单移除，但云端删除失败，请稍后重试"]);
+    }
   };
 
   const checkContent = () => {
@@ -212,20 +244,11 @@ export function CreatePostPage() {
         }),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        const errorMessages: string[] = [];
-        if (data.details && Array.isArray(data.details)) {
-          errorMessages.push(...data.details);
-        } else if (data.message) {
-          errorMessages.push(data.message);
-        } else {
-          errorMessages.push("发帖失败，请稍后重试");
-        }
-        setErrors(errorMessages);
+        setErrors(await parseApiError(response));
         return;
       }
+      const data = await response.json();
 
       router.push(`/post/${data.post.id}`);
       router.refresh();
@@ -262,11 +285,12 @@ export function CreatePostPage() {
           <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="create-post-title" className="block text-sm font-medium text-gray-700 mb-2">
                   标题
                 </label>
                 <div className="relative">
                   <Input
+                    id="create-post-title"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     onBlur={checkContent}
@@ -292,11 +316,12 @@ export function CreatePostPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="create-post-content" className="block text-sm font-medium text-gray-700 mb-2">
                   内容
                 </label>
                 <div className="relative">
                   <Textarea
+                    id="create-post-content"
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     onBlur={checkContent}

@@ -1,8 +1,14 @@
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET() {
   try {
+    const auth = await requireAdmin();
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
+    }
+
     const supabase = await createClient();
     const { data: words, error } = await supabase
       .from("sensitive_words")
