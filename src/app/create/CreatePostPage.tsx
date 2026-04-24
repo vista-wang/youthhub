@@ -26,6 +26,13 @@ interface AttachmentInfo {
   mimeType: string;
 }
 
+interface UploadedFileMeta {
+  url: string;
+  type?: "image" | "file";
+  name?: string;
+  mimeType?: string;
+}
+
 function getFileIcon(mimeType: string) {
   if (mimeType.startsWith("video/")) return Film;
   if (mimeType.startsWith("audio/")) return Music;
@@ -41,6 +48,7 @@ export function CreatePostPage() {
   const [attachments, setAttachments] = useState<AttachmentInfo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [sensitiveWarning, setSensitiveWarning] = useState<string | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -54,18 +62,12 @@ export function CreatePostPage() {
     setContent((prev) => prev + emoji);
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    const remaining = MAX_IMAGES - imageUrls.length;
-    if (remaining <= 0) return;
-
-    const filesToUpload = Array.from(files).slice(0, remaining);
-
+  const uploadFiles = async (filesToUpload: File[]): Promise<UploadedFileMeta[]> => {
+    const uploaded: UploadedFileMeta[] = [];
+    const failedNames: string[] = [];
     setIsUploading(true);
+    setUploadStatus(`正在上传 ${filesToUpload.length} 个文件...`);
     try {
-      const newUrls: string[] = [];
       for (const file of filesToUpload) {
         const formData = new FormData();
         formData.append("file", file);
@@ -75,19 +77,60 @@ export function CreatePostPage() {
           body: formData,
         });
 
+        if (!response.ok) {
+          failedNames.push(file.name);
+          continue;
+        }
+
         const data = await response.json();
         if (data.url) {
-          newUrls.push(data.url);
+          uploaded.push({
+            url: data.url,
+            type: data.type,
+            name: data.name ?? file.name,
+            mimeType: data.mimeType ?? file.type,
+          });
+        } else {
+          failedNames.push(file.name);
         }
       }
-      setImageUrls((prev) => [...prev, ...newUrls]);
-    } catch (error) {
-      console.error("Failed to upload image:", error);
+
+      if (failedNames.length > 0) {
+        setErrors((prev) => [
+          ...prev,
+          `以下文件上传失败：${failedNames.join("、")}`,
+        ]);
+      }
+
+      return uploaded;
+    } catch {
+      setErrors((prev) => [...prev, "上传失败，请检查网络后重试"]);
+      return uploaded;
     } finally {
       setIsUploading(false);
-      if (imageInputRef.current) {
-        imageInputRef.current.value = "";
-      }
+      setUploadStatus(null);
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setErrors([]);
+    const remaining = MAX_IMAGES - imageUrls.length;
+    if (remaining <= 0) return;
+
+    const filesToUpload = Array.from(files).slice(0, remaining);
+    const uploaded = await uploadFiles(filesToUpload);
+    const newUrls = uploaded
+      .filter((item) => item.url)
+      .map((item) => item.url);
+    if (newUrls.length > 0) {
+      setImageUrls((prev) => [...prev, ...newUrls]);
+    }
+
+    if (imageInputRef.current) {
+      imageInputRef.current.value = "";
     }
   };
 
@@ -95,41 +138,27 @@ export function CreatePostPage() {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    setErrors([]);
     const remaining = MAX_ATTACHMENTS - attachments.length;
     if (remaining <= 0) return;
 
     const filesToUpload = Array.from(files).slice(0, remaining);
+    const uploaded = await uploadFiles(filesToUpload);
+    const newAttachments: AttachmentInfo[] = uploaded
+      .filter((item): item is Required<UploadedFileMeta> => Boolean(item.url && item.type && item.name && item.mimeType))
+      .map((item) => ({
+        url: item.url,
+        type: item.type,
+        name: item.name,
+        mimeType: item.mimeType,
+      }));
 
-    setIsUploading(true);
-    try {
-      const newAttachments: AttachmentInfo[] = [];
-      for (const file of filesToUpload) {
-        const formData = new FormData();
-        formData.append("file", file);
-
-        const response = await fetch("/api/upload/attachment", {
-          method: "POST",
-          body: formData,
-        });
-
-        const data = await response.json();
-        if (data.url) {
-          newAttachments.push({
-            url: data.url,
-            type: data.type,
-            name: data.name,
-            mimeType: data.mimeType,
-          });
-        }
-      }
+    if (newAttachments.length > 0) {
       setAttachments((prev) => [...prev, ...newAttachments]);
-    } catch (error) {
-      console.error("Failed to upload file:", error);
-    } finally {
-      setIsUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+    }
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
@@ -391,6 +420,12 @@ export function CreatePostPage() {
                 )}
               </div>
 
+              {uploadStatus && (
+                <div aria-live="polite" className="rounded-lg bg-slate-50 border border-slate-200 px-4 py-2 text-sm text-slate-600">
+                  {uploadStatus}
+                </div>
+              )}
+
               {sensitiveWarning && (
                 <div className="rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-700">
                   ⚠️ {sensitiveWarning}
@@ -423,7 +458,7 @@ export function CreatePostPage() {
                 <Button
                   type="submit"
                   variant="primary"
-                  disabled={isLoading || !title.trim() || !content.trim()}
+                  disabled={isLoading || isUploading || !title.trim() || !content.trim()}
                 >
                   {isLoading ? (
                     <>
