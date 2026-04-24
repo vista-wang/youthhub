@@ -16,6 +16,7 @@ interface HomePageProps {
   initialWeeklyTopic: WeeklyTopic | null;
   initialRecommendedPosts: PostWithAuthor[];
   initialUserKeywords: string[];
+  initialLikedPostIds?: string[];
   isLoggedIn: boolean;
   currentUserId?: string;
 }
@@ -25,6 +26,7 @@ export function HomePage({
   initialWeeklyTopic,
   initialRecommendedPosts,
   initialUserKeywords,
+  initialLikedPostIds = [],
   isLoggedIn,
 }: HomePageProps) {
   const router = useRouter();
@@ -43,6 +45,7 @@ export function HomePage({
     initialPosts,
     initialRecommendedPosts,
     initialUserKeywords,
+    initialLikedPostIds,
   });
 
   useEffect(() => {

@@ -34,10 +34,11 @@ export default async function Home() {
 
   let profile: { username: string | null; avatar_url: string | null } | null = null;
   let userKeywords: string[] = [];
+  let likedPostIds: string[] = [];
   let recommendedPosts: SupabasePostResponse[] | null = null;
 
   if (user) {
-    const [profileResult, keywordsResult] = await Promise.all([
+    const [profileResult, keywordsResult, likesResult] = await Promise.all([
       supabase
         .from("profiles")
         .select("username, avatar_url")
@@ -49,12 +50,18 @@ export default async function Home() {
         .eq("user_id", user.id)
         .order("weight", { ascending: false })
         .limit(10),
+      supabase
+        .from("likes")
+        .select("likeable_id")
+        .eq("user_id", user.id)
+        .eq("likeable_type", "post"),
     ]);
 
     profile = profileResult.data as { username: string | null; avatar_url: string | null } | null;
     
     const typedKeywords = (keywordsResult.data as Array<{ keyword: string; weight: number }> | null) || [];
     userKeywords = typedKeywords.map((k) => k.keyword);
+    likedPostIds = ((likesResult.data as Array<{ likeable_id: string }> | null) || []).map((item) => item.likeable_id);
 
     if (userKeywords.length > 0) {
       const userKeywordWeights = new Map(typedKeywords.map((k) => [k.keyword, k.weight]));
@@ -105,6 +112,7 @@ export default async function Home() {
         initialWeeklyTopic={weeklyTopic}
         initialRecommendedPosts={transformPostsWithAuthor(recommendedPosts as SupabasePostResponse[] | null)}
         initialUserKeywords={userKeywords}
+        initialLikedPostIds={likedPostIds}
         isLoggedIn={!!user}
         currentUserId={user?.id}
       />

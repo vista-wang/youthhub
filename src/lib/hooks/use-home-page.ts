@@ -7,6 +7,7 @@ interface UseHomePageOptions {
   initialPosts: PostWithAuthor[];
   initialRecommendedPosts: PostWithAuthor[];
   initialUserKeywords: string[];
+  initialLikedPostIds?: string[];
 }
 
 interface UseHomePageReturn {
@@ -23,12 +24,30 @@ export function useHomePage({
   initialPosts,
   initialRecommendedPosts,
   initialUserKeywords,
+  initialLikedPostIds = [],
 }: UseHomePageOptions): UseHomePageReturn {
-  const [posts] = useState<PostWithAuthor[]>(initialPosts);
+  const [posts, setPosts] = useState<PostWithAuthor[]>(initialPosts);
   const [recommendedPosts, setRecommendedPosts] = useState<PostWithAuthor[]>(initialRecommendedPosts);
   const [userKeywords] = useState<string[]>(initialUserKeywords);
-  const [likedPosts, setLikedPosts] = useState<Set<string>>(() => new Set());
+  const [likedPosts, setLikedPosts] = useState<Set<string>>(() => new Set(initialLikedPostIds));
   const [isLoading, setIsLoading] = useState(false);
+  const patchLikeCount = useCallback((items: PostWithAuthor[], postId: string, delta: number): PostWithAuthor[] => {
+    return items.map((item) => {
+      if (item.id !== postId) {
+        return item;
+      }
+      return {
+        ...item,
+        likes_count: Math.max(0, item.likes_count + delta),
+      };
+    });
+  }, []);
+
+  const applyLikeDelta = useCallback((postId: string, delta: number) => {
+    setPosts((prev) => patchLikeCount(prev, postId, delta));
+    setRecommendedPosts((prev) => patchLikeCount(prev, postId, delta));
+  }, [patchLikeCount]);
+
 
   const likedPostsRef = useRef(likedPosts);
   likedPostsRef.current = likedPosts;
@@ -61,6 +80,7 @@ export function useHomePage({
       }
       return newSet;
     });
+    applyLikeDelta(postId, isCurrentlyLiked ? -1 : 1);
 
     try {
       const response = await fetch(`/api/posts/${postId}/like`, {
@@ -77,8 +97,9 @@ export function useHomePage({
           }
           return newSet;
         });
+        applyLikeDelta(postId, isCurrentlyLiked ? 1 : -1);
       }
-    } catch (error) {
+    } catch {
       setLikedPosts((prev) => {
         const newSet = new Set(prev);
         if (isCurrentlyLiked) {
@@ -88,8 +109,9 @@ export function useHomePage({
         }
         return newSet;
       });
+      applyLikeDelta(postId, isCurrentlyLiked ? 1 : -1);
     }
-  }, []);
+  }, [applyLikeDelta]);
 
   return {
     posts,
